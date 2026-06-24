@@ -1,0 +1,14 @@
+EQUIFAX CREDIT REPORT
+Credit Score: 680
+Negative Accounts:
+- Creditor: ACME Collections, Account #: 123456XXXX, Balance: $500.00, Status: Collection
+
+EXPERIAN CREDIT REPORT
+Credit Score: 690
+Negative Accounts:
+- Creditor: Apex Visa, Account #: 987654XXXX, Balance: $1200.00, Status: Charge-off
+
+TRANSUNION CREDIT REPORT
+Credit Score: 675
+Negative Accounts:
+- Creditor: Chase Card, Account #: 432109XXXX, Balance: $150.00, Status: 30 days late

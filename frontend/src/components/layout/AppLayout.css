@@ -1,0 +1,31 @@
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-content {
+  margin-left: var(--sidebar-width);
+  padding-top: var(--navbar-height);
+  min-height: 100vh;
+  transition: margin-left var(--transition-base);
+}
+
+.app-content > * {
+  padding: 28px;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@media (max-width: 768px) {
+  .app-content {
+    margin-left: 0;
+  }
+  
+  .app-content > * {
+    padding: 16px;
+  }
+
+  .sidebar-mobile-open {
+    display: flex !important;
+    width: var(--sidebar-width) !important;
+    z-index: 200;
+  }
+}

@@ -1,0 +1,58 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 616 >>
+stream
+BT
+/F1 12 Tf
+72 750 Td
+(EQUIFAX CREDIT REPORT) Tj
+0 -20 Td
+(Credit Score: 680) Tj
+0 -30 Td
+(Negative Accounts:) Tj
+0 -20 Td
+(- Creditor: ACME Collections, Account #: 123456XXXX, Balance: $500, Status: Collection) Tj
+0 -40 Td
+(EXPERIAN CREDIT REPORT) Tj
+0 -20 Td
+(Credit Score: 690) Tj
+0 -30 Td
+(Negative Accounts:) Tj
+0 -20 Td
+(- Creditor: Apex Visa, Account #: 987654XXXX, Balance: $1200, Status: Charge-off) Tj
+0 -40 Td
+(TRANSUNION CREDIT REPORT) Tj
+0 -20 Td
+(Credit Score: 675) Tj
+0 -30 Td
+(Negative Accounts:) Tj
+0 -20 Td
+(- Creditor: Chase Card, Account #: 432109XXXX, Balance: $150, Status: 30 days late) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000908 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+978
+%%EOF

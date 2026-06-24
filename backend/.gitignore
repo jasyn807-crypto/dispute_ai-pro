@@ -1,0 +1,7 @@
+.venv/
+uploads/
+__pycache__/
+*.pyc
+.pytest_cache/
+credit_repair.db
+credit_repair_test.db
