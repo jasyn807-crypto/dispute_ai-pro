@@ -159,7 +159,7 @@ class CreditReportParser:
                 is_corrupt_or_empty = True
 
         if not items:
-            if is_corrupt_or_empty or len(text.strip()) < 100:
+            if is_corrupt_or_empty:
                 items = cls.get_fallback_mock_items()
             else:
                 items = []

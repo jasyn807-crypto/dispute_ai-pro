@@ -43,15 +43,18 @@ def test_parser_service_text():
     assert items[1]["status"] == "charge_off"
 
 def test_parser_service_fallback():
-    # Test fallback generator when parsing fails or input is unstructured
-    text_data = b"Sample report"
-    items = CreditReportParser.parse_report("report.txt", text_data)
-    assert len(items) == 3
+    # Test fallback generator when parsing fails or input is empty
+    items_empty = CreditReportParser.parse_report("report.txt", b"")
+    assert len(items_empty) == 3
     # Check that fallback contains standard items
-    bureaus = {item["bureau"] for item in items}
+    bureaus = {item["bureau"] for item in items_empty}
     assert "Equifax" in bureaus
     assert "Experian" in bureaus
     assert "TransUnion" in bureaus
+
+    # Test that unstructured non-empty contents yield 0 items
+    items_unstructured = CreditReportParser.parse_report("report.txt", b"Sample report")
+    assert len(items_unstructured) == 0
 
 def test_parser_upload_endpoints(client):
     # Setup roles
