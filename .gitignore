@@ -1,0 +1,10 @@
+.agents/
+uploads/
+credit_repair.db
+credit_repair_saas/backend/.venv/
+credit_repair_saas/backend/uploads/
+credit_repair_saas/backend/credit_repair.db
+credit_repair_saas/backend/__pycache__/
+credit_repair_saas/backend/.pytest_cache/
+credit_repair_saas/frontend/node_modules/
+credit_repair_saas/frontend/dist/
