@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboard } from '../../services/api';
+import { dashboard, billing } from '../../services/api';
 import './Dashboard.css';
 
 // Animated counter hook
@@ -124,22 +124,25 @@ export default function Dashboard() {
   const [pipeline, setPipeline] = useState(mockPipeline);
   const [disputeMetrics, setDisputeMetrics] = useState(mockDisputeMetrics);
   const [activity, setActivity] = useState(mockActivity);
+  const [billingList, setBillingList] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
-        const [s, p, d, a] = await Promise.allSettled([
+        const [s, p, d, a, b] = await Promise.allSettled([
           dashboard.getStats(),
           dashboard.getPipeline(),
           dashboard.getDisputeMetrics(),
           dashboard.getRecentActivity(),
+          billing.getAgencyBilling(),
         ]);
         if (s.status === 'fulfilled') setStats(s.value);
         if (p.status === 'fulfilled') setPipeline(p.value);
         if (d.status === 'fulfilled') setDisputeMetrics(d.value);
         if (a.status === 'fulfilled') setActivity(a.value);
+        if (b.status === 'fulfilled') setBillingList(b.value || []);
       } catch (e) {
         // Fall back to mock data
       } finally {
@@ -279,6 +282,37 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Billing Transactions */}
+        <div className="glass-card-static mt-3 p-3 w-full" style={{ marginTop: '24px' }}>
+          <h3 className="section-title mb-2">Agency Billing & Transaction Logs</h3>
+          <p className="page-subtitle mb-3">Certified mail dispatch and AI dispute letter generation fees ($5.00/event).</p>
+          {billingList.length === 0 ? (
+            <p className="text-muted">No billing transactions recorded yet.</p>
+          ) : (
+            <div className="flex-col gap-1">
+              {billingList.slice(0, 10).map((tx) => (
+                <div key={tx.id} className="uploaded-doc-row flex justify-between items-center glass-card p-2" style={{ marginBottom: '8px', padding: '12px' }}>
+                  <span>
+                    💳 <strong>{tx.description}</strong>
+                  </span>
+                  <div className="flex gap-2 items-center">
+                    <span className="text-glow" style={{ fontWeight: 'bold' }}>
+                      ${tx.amount.toFixed(2)}
+                    </span>
+                    <span className={`badge ${tx.status === 'paid' ? 'badge-emerald' : tx.status === 'pending' ? 'badge-amber' : 'badge-red'}`}>
+                      {tx.status}
+                    </span>
+                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>
+                      {new Date(tx.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

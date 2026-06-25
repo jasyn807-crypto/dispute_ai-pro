@@ -104,8 +104,13 @@ class CreditReportParser:
     @classmethod
     def parse_report(cls, filename: str, content: bytes) -> List[Dict[str, Any]]:
         items = []
+        if not content:
+            return cls.get_fallback_mock_items()
+
         ext = filename.split(".")[-1].lower() if filename else ""
-        
+        is_corrupt_or_empty = False
+        text = ""
+
         if ext == "json":
             try:
                 data = json.loads(content.decode("utf-8"))
@@ -133,19 +138,31 @@ class CreditReportParser:
                         "status": negative_type
                     })
             except Exception:
-                pass
+                is_corrupt_or_empty = True
         elif ext == "pdf":
-            text = cls.extract_text_from_pdf(content)
-            items = cls.parse_txt_or_pdf_text(text)
+            try:
+                text = cls.extract_text_from_pdf(content)
+                if not text or not text.strip():
+                    is_corrupt_or_empty = True
+                else:
+                    items = cls.parse_txt_or_pdf_text(text)
+            except Exception:
+                is_corrupt_or_empty = True
         else:
             try:
                 text = content.decode("utf-8", errors="ignore")
-                items = cls.parse_txt_or_pdf_text(text)
+                if not text or not text.strip():
+                    is_corrupt_or_empty = True
+                else:
+                    items = cls.parse_txt_or_pdf_text(text)
             except Exception:
-                pass
+                is_corrupt_or_empty = True
 
         if not items:
-            items = cls.get_fallback_mock_items()
+            if is_corrupt_or_empty or len(text.strip()) < 100:
+                items = cls.get_fallback_mock_items()
+            else:
+                items = []
             
         return items
 

@@ -1,0 +1,167 @@
+/* Credit Reports Styles */
+
+.credit-reports-page {
+  padding: 1rem;
+}
+
+.credit-reports-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.reports-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upload-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, var(--accent-blue-subtle) 0%, transparent 60%);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity var(--transition-base);
+}
+
+.glass-card:hover .upload-glow {
+  opacity: 0.8;
+}
+
+.upload-zone-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.report-item-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  width: 100%;
+}
+
+.report-item-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--glass-border-hover);
+  transform: translateX(2px);
+}
+
+.report-item-btn.active {
+  background: var(--accent-blue-subtle);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 12px var(--accent-blue-glow);
+}
+
+.report-item-icon {
+  font-size: 1.5rem;
+}
+
+.report-item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.report-item-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.category-badge {
+  font-size: 0.7rem;
+  padding: 2px 10px;
+  border-radius: var(--border-radius-full);
+}
+
+.negative-item-card {
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  border-left: 4px solid var(--text-muted);
+  transition: all var(--transition-base);
+}
+
+.negative-item-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Category highlights */
+.cat-amber {
+  border-left-color: var(--accent-amber);
+}
+.cat-amber:hover {
+  box-shadow: 0 0 15px var(--accent-amber-subtle);
+}
+
+.cat-purple {
+  border-left-color: var(--accent-purple);
+}
+.cat-purple:hover {
+  box-shadow: 0 0 15px var(--accent-purple-subtle);
+}
+
+.cat-red {
+  border-left-color: var(--accent-red);
+}
+.cat-red:hover {
+  box-shadow: 0 0 15px var(--accent-red-subtle);
+}
+
+.cat-blue {
+  border-left-color: var(--accent-blue);
+}
+.cat-blue:hover {
+  box-shadow: 0 0 15px var(--accent-blue-subtle);
+}
+
+.cat-emerald {
+  border-left-color: var(--accent-emerald);
+}
+.cat-emerald:hover {
+  box-shadow: 0 0 15px var(--accent-emerald-subtle);
+}
+
+.cat-gray {
+  border-left-color: var(--text-muted);
+}
+
+.item-detail {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.text-glow {
+  text-shadow: 0 0 8px currentColor;
+}
+
+.scale-hover:hover {
+  transform: scale(1.03);
+}
+
+@media (max-width: 768px) {
+  .credit-reports-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -70,7 +70,7 @@ def test_client_endpoints(client):
     status_resp_2 = client.get("/api/client/status", headers=headers_client)
     assert status_resp_2.status_code == 200
     status_data_2 = status_resp_2.json()
-    assert status_data_2["status"] == "documents_uploaded"
+    assert status_data_2["status"] == "onboarding"
     assert status_data_2["onboarding_step"] == "document_uploaded"
     assert status_data_2["onboarding_steps"]["identity_uploaded"] is True
     assert len(status_data_2["documents_uploaded"]) == 1

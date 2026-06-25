@@ -1,0 +1,109 @@
+/* Dispute Detail Page Styles */
+
+.dispute-detail-page {
+  padding: 1rem;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.letter-content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.letter-textarea {
+  width: 100%;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-md);
+  color: var(--text-primary);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.compliance-results-panel {
+  border-top: 2px solid var(--accent-blue);
+}
+
+.compliance-status-indicator {
+  display: inline-flex;
+  padding: 4px 12px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: var(--border-radius-sm);
+  letter-spacing: 0.5px;
+}
+
+.compliance-status-indicator.passed {
+  background: var(--accent-emerald-subtle);
+  color: var(--accent-emerald);
+}
+
+.compliance-status-indicator.failed {
+  background: var(--accent-red-subtle);
+  color: var(--accent-red);
+}
+
+.compliance-flags {
+  font-size: 0.85rem;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 10px;
+  border-radius: var(--border-radius-md);
+}
+
+.compliance-flags ul {
+  margin-left: 16px;
+  margin-top: 4px;
+}
+
+.text-glow-red {
+  color: var(--accent-red);
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.compliance-suggestions {
+  font-size: 0.85rem;
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 10px;
+  border-radius: var(--border-radius-md);
+}
+
+.metadata-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.disputed-item-item {
+  padding: 12px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-md);
+}
+
+.mail-log-item {
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-md);
+}
+
+.log-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 1024px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+}

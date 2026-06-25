@@ -1,0 +1,109 @@
+/* Disputes List Page Styles */
+
+.disputes-page {
+  padding: 1rem;
+}
+
+.disputes-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: var(--border-radius-md);
+}
+
+.filter-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.filter-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-pill {
+  padding: 6px 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-full);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.filter-pill:hover {
+  border-color: var(--glass-border-hover);
+  color: var(--text-primary);
+}
+
+.filter-pill.active {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+  box-shadow: 0 0 10px var(--accent-blue-glow);
+}
+
+.disputes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.dispute-card {
+  padding: 20px;
+  min-height: 220px;
+  transition: all var(--transition-base);
+}
+
+.dispute-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+.dispute-letter-id {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.dispute-bureau {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.dispute-preview {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.dispute-tracking {
+  font-size: 0.8rem;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 6px 10px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tracking-code {
+  color: var(--accent-blue-light);
+  font-family: monospace;
+}
+
+.dispute-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.border-top-glass {
+  border-top: 1px solid var(--glass-border);
+}

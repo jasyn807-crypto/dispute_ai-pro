@@ -66,10 +66,10 @@ def get_metrics(
     success_rate = 0.75  # Default mock success rate for M1
 
     if client_ids:
-        total_disputed = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids)).count()
-        pending = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids), DisputeItem.status == "pending").count()
-        deleted = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids), DisputeItem.status == "deleted").count()
-        verified = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids), DisputeItem.status == "verified").count()
+        total_disputed = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids), DisputeItem.dispute_letter_id != None).count()
+        pending = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids), DisputeItem.status == "pending", DisputeItem.dispute_letter_id != None).count()
+        deleted = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids), DisputeItem.status == "deleted", DisputeItem.dispute_letter_id != None).count()
+        verified = db.query(DisputeItem).filter(DisputeItem.client_id.in_(client_ids), DisputeItem.status == "verified", DisputeItem.dispute_letter_id != None).count()
         
         resolved = deleted + verified
         if resolved > 0:
@@ -150,3 +150,30 @@ def get_metrics(
         agency_id=agency.id,
         metrics=metrics_dict
     )
+
+@router.get("/billing")
+def get_agency_billing(
+    current_user: User = Depends(RoleChecker(["agency"])),
+    db: Session = Depends(get_db)
+):
+    agency = db.query(Agency).filter(Agency.user_id == current_user.id).first()
+    if not agency:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agency profile not found"
+        )
+    
+    transactions = db.query(BillingTransaction).filter(BillingTransaction.agency_id == agency.id).order_by(BillingTransaction.created_at.desc()).all()
+    
+    return [
+        {
+            "id": tx.id,
+            "agency_id": tx.agency_id,
+            "client_id": tx.client_id,
+            "amount": tx.amount,
+            "description": tx.description,
+            "status": tx.status,
+            "created_at": tx.created_at
+        }
+        for tx in transactions
+    ]

@@ -33,7 +33,8 @@ def backend_url(pytestconfig):
     if is_port_in_use(host, port):
         # A backend (mock or real) is already running on port 8000
         print(f"\n[E2E] Port {port} is already in use. Assuming backend is running at {base_url}.")
-        return base_url
+        yield base_url
+        return
 
     # Start mock_backend.py as a subprocess using the current Python executable
     mock_backend_path = os.path.join(os.path.dirname(__file__), "mock_backend.py")

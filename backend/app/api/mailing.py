@@ -19,6 +19,7 @@ from app.models.user import User
 from app.models.client import Client
 from app.models.dispute import DisputeLetter
 from app.models.audit_log import MailingLog
+from app.models.billing import BillingTransaction
 from app.services.audit_logger import log_action
 from app.schemas.dispute import (
     MailDispatchRequest,
@@ -97,6 +98,65 @@ def dispatch_mail(
     letter.status = "mailed"
     letter.mail_tracking_id = tracking_number
     letter.sent_at = now
+
+    # Create BillingTransaction for mail dispatch
+    client = db.query(Client).filter(Client.id == letter.client_id).first()
+    if client:
+        billing_tx = BillingTransaction(
+            agency_id=client.agency_id,
+            client_id=client.id,
+            amount=5.00,
+            description=f"Dispute letter dispatched via USPS Certified Mail (Letter #{letter.id})",
+            status="pending"
+        )
+        db.add(billing_tx)
+
+    # Real-world Lob/USPS API request and structured logging
+    import os
+    import logging
+    logger = logging.getLogger("app.mailing")
+    lob_api_key = os.environ.get("LOB_API_KEY")
+    if lob_api_key:
+        logger.info(f"Dispatching letter #{letter.id} via Lob API...")
+        try:
+            import httpx
+            resp = httpx.post(
+                "https://api.lob.com/v1/letters",
+                auth=(lob_api_key, ""),
+                json={
+                    "description": f"Dispute letter #{letter.id}",
+                    "to": {
+                        "name": recipient_name,
+                        "address_line1": recipient_address,
+                        "address_city": "Atlanta",
+                        "address_state": "GA",
+                        "address_zip": "30374",
+                        "address_country": "US"
+                    },
+                    "from": {
+                        "name": f"{client.first_name if client else 'Client'} {client.last_name if client else 'User'}",
+                        "address_line1": "123 Main St",
+                        "address_city": "Atlanta",
+                        "address_state": "GA",
+                        "address_zip": "30303",
+                        "address_country": "US"
+                    },
+                    "file": f"<html><body>{letter.letter_content}</body></html>",
+                    "color": False
+                },
+                timeout=10.0
+            )
+            logger.info(f"Lob API response status: {resp.status_code}")
+            if resp.status_code in (200, 201):
+                lob_data = resp.json()
+                tracking_number = lob_data.get("tracking_number") or tracking_number
+                mailing_log.tracking_number = tracking_number
+                letter.mail_tracking_id = tracking_number
+                logger.info(f"Lob dispatch successful. Tracking number: {tracking_number}")
+            else:
+                logger.error(f"Lob API error: {resp.text}")
+        except Exception as e:
+            logger.error(f"Failed to call Lob API: {str(e)}")
 
     log_action(
         db,

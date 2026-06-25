@@ -16,12 +16,14 @@ REPORTS: Dict[str, Dict[str, Any]] = {}
 LETTERS: Dict[str, Dict[str, Any]] = {}
 MAILS: Dict[str, Dict[str, Any]] = {}
 DOCUMENTS: Dict[int, Dict[str, Any]] = {}
+BILLING_TRANSACTIONS: Dict[int, Dict[str, Any]] = {}
 
 # Sequence Counters
 user_seq = 1
 agency_seq = 1
 client_seq = 1
 doc_seq = 1
+billing_tx_seq = 1
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
@@ -598,6 +600,22 @@ def generate_dispute_letter(
         "created_at": datetime.datetime.utcnow().isoformat()
     }
     
+    global billing_tx_seq
+    client_id = report.get("client_id")
+    client = CLIENTS.get(client_id)
+    if client:
+        tx_id = billing_tx_seq
+        billing_tx_seq += 1
+        BILLING_TRANSACTIONS[tx_id] = {
+            "id": tx_id,
+            "agency_id": client["agency_id"],
+            "client_id": client_id,
+            "amount": 5.00,
+            "description": f"Dispute letter generated for client {client['first_name']} {client['last_name']}",
+            "status": "pending",
+            "created_at": datetime.datetime.utcnow().isoformat()
+        }
+    
     return DisputeGenerateResponse(
         letter_id=letter_id,
         content=content
@@ -655,11 +673,61 @@ def mail_dispute_letter(
         "created_at": datetime.datetime.utcnow().isoformat()
     }
     
+    global billing_tx_seq
+    letter = LETTERS[req.letter_id]
+    report = REPORTS[letter["report_id"]]
+    client_id = report.get("client_id")
+    client = CLIENTS.get(client_id)
+    if client:
+        tx_id = billing_tx_seq
+        billing_tx_seq += 1
+        BILLING_TRANSACTIONS[tx_id] = {
+            "id": tx_id,
+            "agency_id": client["agency_id"],
+            "client_id": client_id,
+            "amount": 5.00,
+            "description": f"Dispute letter dispatched via USPS Certified Mail for client {client['first_name']} {client['last_name']}",
+            "status": "pending",
+            "created_at": datetime.datetime.utcnow().isoformat()
+        }
+    
     return DisputeMailResponse(
         mail_id=mail_id,
         status="queued",
         tracking_number=tracking_number
     )
+
+@app.get("/api/client/billing")
+def get_client_billing(current_user = Depends(require_role(["client"]))):
+    client = None
+    for c in CLIENTS.values():
+        if c["user_id"] == current_user["id"]:
+            client = c
+            break
+    if not client:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client profile not found")
+        
+    client_txs = [
+        tx for tx in BILLING_TRANSACTIONS.values() if tx["client_id"] == client["id"]
+    ]
+    client_txs.sort(key=lambda x: x["id"], reverse=True)
+    return client_txs
+
+@app.get("/api/agency/billing")
+def get_agency_billing(current_user = Depends(require_role(["agency"]))):
+    agency = None
+    for a in AGENCIES.values():
+        if a["user_id"] == current_user["id"]:
+            agency = a
+            break
+    if not agency:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency profile not found")
+        
+    agency_txs = [
+        tx for tx in BILLING_TRANSACTIONS.values() if tx["agency_id"] == agency["id"]
+    ]
+    agency_txs.sort(key=lambda x: x["id"], reverse=True)
+    return agency_txs
 
 # Helper route for E2E testing to simulate USPS delivery status updates
 @app.post("/api/test/simulate-delivery")

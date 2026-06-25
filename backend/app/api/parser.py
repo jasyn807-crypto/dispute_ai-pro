@@ -165,3 +165,39 @@ def list_credit_reports(
         )
         for r in reports
     ]
+
+@router.get("/{report_id}/items", response_model=List[NegativeItemSchema])
+def get_report_items(
+    report_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    report = db.query(CreditReport).filter(CreditReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Credit report not found")
+        
+    if current_user.role == "agency":
+        if not current_user.agency_profile:
+            raise HTTPException(status_code=400, detail="Agency profile not found")
+        client = db.query(Client).filter(
+            Client.id == report.client_id,
+            Client.agency_id == current_user.agency_profile.id
+        ).first()
+        if not client:
+            raise HTTPException(status_code=403, detail="Not authorized")
+    elif current_user.role == "client":
+        client = db.query(Client).filter(Client.user_id == current_user.id).first()
+        if not client or report.client_id != client.id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    items = db.query(DisputeItem).filter(DisputeItem.credit_report_id == report_id).all()
+    return [
+        NegativeItemSchema(
+            id=str(item.id),
+            creditor=item.creditor_name,
+            amount=item.balance or 0.0,
+            bureau=item.bureau,
+            status=item.negative_type
+        )
+        for item in items
+    ]

@@ -9,6 +9,7 @@ from app.models.client import Client
 from app.models.document import ClientDocument
 from app.models.dispute import DisputeItem
 from app.models.credit_report import CreditReport
+from app.models.billing import BillingTransaction
 from app.schemas.client import ClientStatus, DocumentUploadResponse
 
 router = APIRouter()
@@ -34,10 +35,10 @@ def get_status(
     has_address_proof = any(d.document_type in ["address_proof", "address"] for d in documents)
 
     # Dispute item summary
-    total_disputed = db.query(DisputeItem).filter(DisputeItem.client_id == client.id).count()
-    pending = db.query(DisputeItem).filter(DisputeItem.client_id == client.id, DisputeItem.status == "pending").count()
-    deleted = db.query(DisputeItem).filter(DisputeItem.client_id == client.id, DisputeItem.status == "deleted").count()
-    verified = db.query(DisputeItem).filter(DisputeItem.client_id == client.id, DisputeItem.status == "verified").count()
+    total_disputed = db.query(DisputeItem).filter(DisputeItem.client_id == client.id, DisputeItem.dispute_letter_id != None).count()
+    pending = db.query(DisputeItem).filter(DisputeItem.client_id == client.id, DisputeItem.status == "pending", DisputeItem.dispute_letter_id != None).count()
+    deleted = db.query(DisputeItem).filter(DisputeItem.client_id == client.id, DisputeItem.status == "deleted", DisputeItem.dispute_letter_id != None).count()
+    verified = db.query(DisputeItem).filter(DisputeItem.client_id == client.id, DisputeItem.status == "verified", DisputeItem.dispute_letter_id != None).count()
 
     has_report = db.query(CreditReport).filter(CreditReport.client_id == client.id).count() > 0
 
@@ -147,10 +148,19 @@ def upload_document(
     db.add(doc)
 
     # Update client onboarding progress and status
-    if client.onboarding_step == "document_upload":
+    docs = db.query(ClientDocument).filter(ClientDocument.client_id == client.id).all()
+    uploaded_types = {d.document_type for d in docs}
+    uploaded_types.add(document_type)
+
+    has_id = any(t in ["id_proof", "identity"] for t in uploaded_types)
+    has_addr = any(t in ["address_proof", "address"] for t in uploaded_types)
+
+    if has_id and has_addr:
+        client.status = "active"
+        client.onboarding_step = "completed"
+    else:
+        client.status = "onboarding"
         client.onboarding_step = "document_uploaded"
-    if client.status == "onboarding":
-        client.status = "documents_uploaded"
 
     db.commit()
     db.refresh(doc)
@@ -165,3 +175,30 @@ def upload_document(
         client_id=client.id,
         uploaded_at=doc.uploaded_at
     )
+
+@router.get("/billing")
+def get_client_billing(
+    current_user: User = Depends(RoleChecker(["client"])),
+    db: Session = Depends(get_db)
+):
+    client = db.query(Client).filter(Client.user_id == current_user.id).first()
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client profile not found"
+        )
+    
+    transactions = db.query(BillingTransaction).filter(BillingTransaction.client_id == client.id).order_by(BillingTransaction.created_at.desc()).all()
+    
+    return [
+        {
+            "id": tx.id,
+            "agency_id": tx.agency_id,
+            "client_id": tx.client_id,
+            "amount": tx.amount,
+            "description": tx.description,
+            "status": tx.status,
+            "created_at": tx.created_at
+        }
+        for tx in transactions
+    ]

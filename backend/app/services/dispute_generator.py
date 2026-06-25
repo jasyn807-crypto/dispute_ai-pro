@@ -229,8 +229,44 @@ def generate_dispute_letter(
     original_creditor: Optional[str] = None,
 ) -> str:
     """
-    Generate a unique dispute letter from templates with randomized phrasing.
+    Generate a unique dispute letter. Uses OpenAI GPT-4o-mini if OPENAI_API_KEY is present,
+    otherwise falls back to templates with randomized phrasing.
     """
+    import os
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if openai_api_key:
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=openai_api_key)
+            prompt = (
+                f"Generate a professional, highly customized, legally compliant dispute letter under FCRA and FDCPA guidelines.\n"
+                f"Client Name: {client_first_name} {client_last_name}\n"
+                f"Client Address: {client_address or '[Address on file]'}\n"
+                f"Client SSN Last 4: {client_ssn_last4 or 'N/A'}\n"
+                f"Client DOB: {client_dob or 'N/A'}\n"
+                f"Credit Bureau: {bureau}\n"
+                f"Disputed Account Name: {account_name}\n"
+                f"Disputed Account Last 4 digits: {account_last4 or 'N/A'}\n"
+                f"Item Type: {item_type}\n"
+                f"Reported Balance: ${balance:.2f}\n"
+                f"Date Reported: {date_reported or 'N/A'}\n"
+                f"Original Creditor: {original_creditor or 'N/A'}\n\n"
+                f"Output only the generated letter content. Do not include extra conversational text."
+            )
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an expert FCRA/FDCPA legal compliance dispute letter generator."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7
+            )
+            content = response.choices[0].message.content
+            if content and content.strip():
+                return content.strip()
+        except Exception:
+            pass
+
     today = datetime.now(timezone.utc).strftime("%B %d, %Y")
     bureau_lower = bureau.lower()
     bureau_address = BUREAU_ADDRESSES.get(bureau_lower, f"{bureau}\n[Address on file]")
@@ -289,3 +325,4 @@ def generate_dispute_letter(
     )
 
     return header + id_block + salutation + opening + reason + verification + closing + croa + sign_off
+

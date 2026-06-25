@@ -89,12 +89,26 @@ export const mailing = {
   getLogs: (params = '') => request(`/mailing/logs${params ? `?${params}` : ''}`),
 };
 
+// Client
+export const client = {
+  getStatus: () => request('/client/status'),
+  upload: (formData) => request('/client/upload', { method: 'POST', body: formData }),
+};
+
+// Billing
+export const billing = {
+  getAgencyBilling: () => request('/agency/billing'),
+  getClientBilling: () => request('/client/billing'),
+};
+
 export default {
   auth,
   dashboard,
   clients,
+  client,
   creditReports,
   disputes,
   documents,
   mailing,
+  billing,
 };

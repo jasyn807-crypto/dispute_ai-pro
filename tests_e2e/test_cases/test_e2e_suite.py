@@ -1107,3 +1107,100 @@ def test_t4_scenario_5_end_to_end_registration_to_mailing(backend_url, public_cl
     metrics_resp = public_client.get("/api/agency/metrics", headers=agency_headers)
     assert metrics_resp.status_code == 200
     assert metrics_resp.json()["dispute_metrics"]["total_disputed"] == 1
+
+def test_t1_billing_verification(public_client):
+    """Verify that dispute letter generation and mail dispatch create billing transactions, and that billing endpoints return them."""
+    timestamp = int(time.time() * 1000)
+    
+    # 1. Register and log in Agency
+    agency_email = f"billing_agency_{timestamp}@test.com"
+    agency_pass = "Password123!"
+    reg_agency = public_client.post("/api/auth/register", json={
+        "email": agency_email,
+        "password": agency_pass,
+        "role": "agency",
+        "company_name": f"Billing Agency {timestamp}"
+    })
+    assert reg_agency.status_code == 201
+    
+    tok_agency = public_client.post("/api/auth/token", data={"username": agency_email, "password": agency_pass})
+    agency_token = tok_agency.json()["access_token"]
+    agency_headers = {"Authorization": f"Bearer {agency_token}"}
+    
+    # Get Agency ID from /me
+    me_resp = public_client.get("/api/auth/me", headers=agency_headers)
+    agency_id = me_resp.json()["agency"]["id"]
+    
+    # 2. Register and log in Client
+    client_email = f"billing_client_{timestamp}@test.com"
+    client_pass = "Password123!"
+    reg_client = public_client.post("/api/auth/register", json={
+        "email": client_email,
+        "password": client_pass,
+        "role": "client",
+        "first_name": "Billing",
+        "last_name": f"Client_{timestamp}",
+        "agency_id": agency_id
+    })
+    assert reg_client.status_code == 201
+    
+    tok_client = public_client.post("/api/auth/token", data={"username": client_email, "password": client_pass})
+    client_token = tok_client.json()["access_token"]
+    client_headers = {"Authorization": f"Bearer {client_token}"}
+    
+    # 3. Check initial billing (should be empty list)
+    client_billing_resp = public_client.get("/api/client/billing", headers=client_headers)
+    assert client_billing_resp.status_code == 200
+    assert len(client_billing_resp.json()) == 0
+    
+    agency_billing_resp = public_client.get("/api/agency/billing", headers=agency_headers)
+    assert agency_billing_resp.status_code == 200
+    assert len(agency_billing_resp.json()) == 0
+    
+    # 4. Client uploads credit report
+    files = {"report": ("rep_billing.txt", io.BytesIO(b"Credit Report for Billing"), "text/plain")}
+    up_resp = public_client.post("/api/parser/upload", files=files, headers=client_headers)
+    assert up_resp.status_code == 200
+    report_id = up_resp.json()["report_id"]
+    items = up_resp.json()["negative_items"]
+    eq_item = next(item for item in items if item["bureau"] == "Equifax")
+    
+    # 5. Generate dispute letter (triggers generation charge)
+    gen_resp = public_client.post("/api/dispute/generate", json={
+        "report_id": report_id,
+        "item_ids": [eq_item["id"]],
+        "reason": "This is a billing verification dispute."
+    }, headers=client_headers)
+    assert gen_resp.status_code == 200
+    letter_id = gen_resp.json()["letter_id"]
+    
+    # Verify generation charge was created (5.00)
+    client_billing_resp = public_client.get("/api/client/billing", headers=client_headers)
+    assert client_billing_resp.status_code == 200
+    assert len(client_billing_resp.json()) == 1
+    assert client_billing_resp.json()[0]["amount"] == 5.00
+    assert "generated" in client_billing_resp.json()[0]["description"].lower()
+    
+    agency_billing_resp = public_client.get("/api/agency/billing", headers=agency_headers)
+    assert agency_billing_resp.status_code == 200
+    assert len(agency_billing_resp.json()) == 1
+    assert agency_billing_resp.json()[0]["amount"] == 5.00
+    
+    # 6. Mail dispute letter (triggers mail dispatch charge)
+    mail_resp = public_client.post("/api/dispute/mail", json={
+        "letter_id": letter_id,
+        "recipient_bureau": "Equifax"
+    }, headers=client_headers)
+    assert mail_resp.status_code == 200
+    
+    # Verify mailing charge was created (additional 5.00)
+    client_billing_resp = public_client.get("/api/client/billing", headers=client_headers)
+    assert len(client_billing_resp.json()) == 2
+    # Check that one is generation and one is dispatch
+    descriptions = [tx["description"].lower() for tx in client_billing_resp.json()]
+    assert any("generated" in desc for desc in descriptions)
+    assert any("dispatched" in desc for desc in descriptions)
+    
+    agency_billing_resp = public_client.get("/api/agency/billing", headers=agency_headers)
+    assert len(agency_billing_resp.json()) == 2
+
