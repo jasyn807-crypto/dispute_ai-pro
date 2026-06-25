@@ -6,6 +6,7 @@ from app.models.document import ClientDocument, Document
 from app.models.dispute import DisputeLetter, DisputeItem
 from app.models.billing import BillingTransaction
 from app.models.credit_report import CreditReport
+from app.models.audit_log import AuditLog, MailingLog
 
 __all__ = [
     "Base",
@@ -19,4 +20,6 @@ __all__ = [
     "DisputeItem",
     "BillingTransaction",
     "CreditReport",
+    "AuditLog",
+    "MailingLog",
 ]

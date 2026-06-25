@@ -1,0 +1,76 @@
+{
+  "bureau": "equifax",
+  "report_date": "2024-01-15",
+  "personal_info": {
+    "name": "John Doe",
+    "ssn_last4": "1234",
+    "dob": "1985-03-20",
+    "addresses": ["123 Main St, Anytown, USA 12345"]
+  },
+  "accounts": [
+    {
+      "creditor": "Chase Bank",
+      "account_number_last4": "5678",
+      "type": "credit_card",
+      "status": "open",
+      "balance": 2500,
+      "credit_limit": 10000,
+      "payment_history": "current",
+      "opened_date": "2019-06-01"
+    },
+    {
+      "creditor": "ABC Collections",
+      "account_number_last4": "9012",
+      "type": "collection",
+      "status": "derogatory",
+      "balance": 1200,
+      "original_creditor": "Verizon Wireless",
+      "date_reported": "2023-08-15",
+      "payment_history": "collection"
+    },
+    {
+      "creditor": "Capital One",
+      "account_number_last4": "3456",
+      "type": "credit_card",
+      "status": "derogatory",
+      "balance": 3800,
+      "credit_limit": 5000,
+      "payment_history": "60_days_late",
+      "opened_date": "2020-02-10",
+      "date_reported": "2023-11-01"
+    },
+    {
+      "creditor": "Wells Fargo",
+      "account_number_last4": "7890",
+      "type": "auto_loan",
+      "status": "open",
+      "balance": 15200,
+      "credit_limit": 25000,
+      "payment_history": "current",
+      "opened_date": "2021-09-15"
+    },
+    {
+      "creditor": "Midland Credit Management",
+      "account_number_last4": "2345",
+      "type": "collection",
+      "status": "derogatory",
+      "balance": 890,
+      "original_creditor": "AT&T",
+      "date_reported": "2023-06-20",
+      "payment_history": "collection"
+    }
+  ],
+  "inquiries": [
+    {
+      "creditor": "Discover Financial",
+      "date": "2024-01-10",
+      "type": "hard"
+    },
+    {
+      "creditor": "American Express",
+      "date": "2023-12-05",
+      "type": "hard"
+    }
+  ],
+  "public_records": []
+}

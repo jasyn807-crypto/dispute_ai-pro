@@ -1,0 +1,72 @@
+{
+  "bureau": "experian",
+  "report_date": "2024-01-18",
+  "personal_info": {
+    "name": "Jane Smith",
+    "ssn_last4": "5678",
+    "dob": "1990-07-12",
+    "addresses": ["456 Oak Avenue, Springfield, IL 62701"]
+  },
+  "accounts": [
+    {
+      "creditor": "Bank of America",
+      "account_number_last4": "1111",
+      "type": "credit_card",
+      "status": "open",
+      "balance": 1800,
+      "credit_limit": 8000,
+      "payment_history": "current",
+      "opened_date": "2018-03-15"
+    },
+    {
+      "creditor": "Portfolio Recovery Associates",
+      "account_number_last4": "2222",
+      "type": "collection",
+      "status": "derogatory",
+      "balance": 2450,
+      "original_creditor": "Sprint",
+      "date_reported": "2023-04-10",
+      "payment_history": "collection"
+    },
+    {
+      "creditor": "Synchrony Bank",
+      "account_number_last4": "3333",
+      "type": "credit_card",
+      "status": "derogatory",
+      "balance": 0,
+      "credit_limit": 3000,
+      "payment_history": "charge_off",
+      "opened_date": "2017-11-20",
+      "date_reported": "2023-02-28"
+    },
+    {
+      "creditor": "US Bank",
+      "account_number_last4": "4444",
+      "type": "mortgage",
+      "status": "open",
+      "balance": 185000,
+      "credit_limit": 220000,
+      "payment_history": "current",
+      "opened_date": "2020-06-01"
+    },
+    {
+      "creditor": "Citi",
+      "account_number_last4": "5555",
+      "type": "credit_card",
+      "status": "derogatory",
+      "balance": 4200,
+      "credit_limit": 6000,
+      "payment_history": "90_days_late",
+      "opened_date": "2019-09-10",
+      "date_reported": "2023-10-15"
+    }
+  ],
+  "inquiries": [
+    {
+      "creditor": "Capital One",
+      "date": "2024-01-05",
+      "type": "hard"
+    }
+  ],
+  "public_records": []
+}

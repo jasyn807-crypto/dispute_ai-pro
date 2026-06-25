@@ -1,0 +1,92 @@
+{
+  "bureau": "transunion",
+  "report_date": "2024-01-20",
+  "personal_info": {
+    "name": "Robert Johnson",
+    "ssn_last4": "9012",
+    "dob": "1978-11-05",
+    "addresses": ["789 Pine Road, Denver, CO 80202"]
+  },
+  "accounts": [
+    {
+      "creditor": "Discover",
+      "account_number_last4": "6666",
+      "type": "credit_card",
+      "status": "open",
+      "balance": 3200,
+      "credit_limit": 12000,
+      "payment_history": "current",
+      "opened_date": "2016-08-22"
+    },
+    {
+      "creditor": "Cavalry SPV I",
+      "account_number_last4": "7777",
+      "type": "collection",
+      "status": "derogatory",
+      "balance": 5600,
+      "original_creditor": "Comcast",
+      "date_reported": "2022-12-01",
+      "payment_history": "collection"
+    },
+    {
+      "creditor": "Ford Motor Credit",
+      "account_number_last4": "8888",
+      "type": "auto_loan",
+      "status": "derogatory",
+      "balance": 8900,
+      "credit_limit": 28000,
+      "payment_history": "repossession",
+      "opened_date": "2019-04-15",
+      "date_reported": "2023-07-20"
+    },
+    {
+      "creditor": "Target",
+      "account_number_last4": "9999",
+      "type": "credit_card",
+      "status": "open",
+      "balance": 450,
+      "credit_limit": 2000,
+      "payment_history": "current",
+      "opened_date": "2022-01-10"
+    },
+    {
+      "creditor": "LVNV Funding",
+      "account_number_last4": "0000",
+      "type": "collection",
+      "status": "derogatory",
+      "balance": 1750,
+      "original_creditor": "T-Mobile",
+      "date_reported": "2023-09-05",
+      "payment_history": "collection"
+    },
+    {
+      "creditor": "Navient",
+      "account_number_last4": "1010",
+      "type": "student_loan",
+      "status": "derogatory",
+      "balance": 32000,
+      "credit_limit": 35000,
+      "payment_history": "120_days_late",
+      "opened_date": "2015-09-01",
+      "date_reported": "2023-05-15"
+    }
+  ],
+  "inquiries": [
+    {
+      "creditor": "Wells Fargo",
+      "date": "2024-01-12",
+      "type": "hard"
+    },
+    {
+      "creditor": "Chase",
+      "date": "2023-11-20",
+      "type": "hard"
+    },
+    {
+      "creditor": "Ally Financial",
+      "date": "2023-10-08",
+      "type": "hard"
+    }
+  ],
+  "public_records": []
+}
