@@ -41,14 +41,25 @@ async def validation_exception_handler(request, exc):
     )
 
 
+import os
+
 # Enable CORS for the frontend
+cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+env_origins = os.getenv("CORS_ORIGINS")
+if env_origins:
+    cors_origins.extend([origin.strip() for origin in env_origins.split(",")])
+else:
+    # Fallback to allow all in development if no env is set (optional, but keep it secure by default)
+    pass
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
