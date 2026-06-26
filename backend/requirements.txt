@@ -39,3 +39,5 @@ uvicorn==0.49.0
 watchfiles==1.2.0
 websockets==16.0
 pypdf>=4.0.0
+psycopg2-binary>=2.9.0
+
