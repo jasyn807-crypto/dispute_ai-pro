@@ -11,6 +11,8 @@ from app.api.dashboard import router as dashboard_router
 from app.api.documents import router as documents_router
 from app.api.mailing import router as mailing_router
 from app.api.clients_plural import router as clients_router_plural
+from app.api.stripe_payments import router as stripe_router
+
 
 # Auto-create tables on startup (convenient for SQLite)
 Base.metadata.create_all(bind=engine)
@@ -73,6 +75,8 @@ app.include_router(disputes_router, prefix="/api/dispute", tags=["Disputes"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(documents_router, prefix="/api/documents", tags=["Documents"])
 app.include_router(mailing_router, prefix="/api/mailing", tags=["Mailing"])
+app.include_router(stripe_router, prefix="/api/stripe", tags=["Stripe"])
+
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
