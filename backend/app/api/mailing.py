@@ -70,10 +70,21 @@ def dispatch_mail(
     if not letter.letter_content or not letter.letter_content.strip():
         raise HTTPException(status_code=400, detail="Letter has no content. Generate a letter first.")
 
-    # Determine recipient
+def perform_mail_dispatch(
+    letter: DisputeLetter,
+    db: Session,
+    recipient_name: Optional[str] = None,
+    recipient_address: Optional[str] = None,
+    ip_address: Optional[str] = None,
+    triggered_by_user_id: Optional[int] = None
+) -> MailingLog:
+    """
+    Executes the actual USPS print/mail action (either via Lob API or simulated fallback logs)
+    and saves the dispatch records.
+    """
     bureau_lower = letter.bureau.lower() if letter.bureau else "unknown"
-    recipient_name = body.recipient_name or f"{bureau_lower.title()} Dispute Department"
-    recipient_address = body.recipient_address or BUREAU_ADDRESSES.get(
+    rec_name = recipient_name or f"{bureau_lower.title()} Dispute Department"
+    rec_addr = recipient_address or BUREAU_ADDRESSES.get(
         bureau_lower, f"{bureau_lower.title()} - Address on file"
     )
 
@@ -84,8 +95,8 @@ def dispatch_mail(
 
     mailing_log = MailingLog(
         dispute_letter_id=letter.id,
-        recipient_name=recipient_name,
-        recipient_address=recipient_address,
+        recipient_name=rec_name,
+        recipient_address=rec_addr,
         bureau=bureau_lower,
         tracking_number=tracking_number,
         status="queued",
@@ -99,17 +110,7 @@ def dispatch_mail(
     letter.mail_tracking_id = tracking_number
     letter.sent_at = now
 
-    # Create BillingTransaction for mail dispatch
     client = db.query(Client).filter(Client.id == letter.client_id).first()
-    if client:
-        billing_tx = BillingTransaction(
-            agency_id=client.agency_id,
-            client_id=client.id,
-            amount=5.00,
-            description=f"Dispute letter dispatched via USPS Certified Mail (Letter #{letter.id})",
-            status="pending"
-        )
-        db.add(billing_tx)
 
     # Real-world Lob/USPS API request and structured logging
     import os
@@ -126,8 +127,8 @@ def dispatch_mail(
                 json={
                     "description": f"Dispute letter #{letter.id}",
                     "to": {
-                        "name": recipient_name,
-                        "address_line1": recipient_address,
+                        "name": rec_name,
+                        "address_line1": rec_addr,
                         "address_city": "Atlanta",
                         "address_state": "GA",
                         "address_zip": "30374",
@@ -158,22 +159,75 @@ def dispatch_mail(
         except Exception as e:
             logger.error(f"Failed to call Lob API: {str(e)}")
 
-    log_action(
-        db,
-        user_id=current_user.id,
-        action="dispatch_mail",
-        resource_type="mailing_log",
-        resource_id=None,
-        ip_address=request.client.host if request.client else None,
-        details={
-            "dispute_letter_id": letter.id,
-            "tracking_number": tracking_number,
-            "bureau": bureau_lower,
-        },
-    )
+    if triggered_by_user_id:
+        log_action(
+            db,
+            user_id=triggered_by_user_id,
+            action="dispatch_mail",
+            resource_type="mailing_log",
+            resource_id=None,
+            ip_address=ip_address,
+            details={
+                "dispute_letter_id": letter.id,
+                "tracking_number": tracking_number,
+                "bureau": bureau_lower,
+            },
+        )
 
     db.commit()
     db.refresh(mailing_log)
+    return mailing_log
+
+
+@router.post("/dispatch", response_model=MailDispatchResponse, status_code=status.HTTP_201_CREATED)
+def dispatch_mail(
+    body: MailDispatchRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Simulate mailing a dispute letter to a credit bureau."""
+    letter = db.query(DisputeLetter).filter(DisputeLetter.id == body.dispute_letter_id).first()
+    if not letter:
+        raise HTTPException(status_code=404, detail="Dispute letter not found")
+
+    allowed_ids = _get_agency_client_ids(current_user, db)
+    if letter.client_id not in allowed_ids:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    if not letter.letter_content or not letter.letter_content.strip():
+        raise HTTPException(status_code=400, detail="Letter has no content. Generate a letter first.")
+
+    # Enforcement: If current user is a Client, they MUST have paid the dispatch transaction first
+    if current_user.role == "client":
+        paid_tx = db.query(BillingTransaction).filter(
+            BillingTransaction.client_id == letter.client_id,
+            BillingTransaction.description.like(f"%Letter #{letter.id}%"),
+            BillingTransaction.status == "paid"
+        ).first()
+        if not paid_tx:
+            raise HTTPException(
+                status_code=402, 
+                detail="Payment required for mailing. Please complete Stripe checkout first."
+            )
+
+    # Determine recipient
+    bureau_lower = letter.bureau.lower() if letter.bureau else "unknown"
+    recipient_name = body.recipient_name or f"{bureau_lower.title()} Dispute Department"
+    recipient_address = body.recipient_address or BUREAU_ADDRESSES.get(
+        bureau_lower, f"{bureau_lower.title()} - Address on file"
+    )
+
+    # Create dispatch
+    mailing_log = perform_mail_dispatch(
+        letter=letter,
+        db=db,
+        recipient_name=recipient_name,
+        recipient_address=recipient_address,
+        ip_address=request.client.host if request.client else None,
+        triggered_by_user_id=current_user.id
+    )
+
 
     return MailDispatchResponse(
         message=f"Letter dispatched to {recipient_name} via simulated USPS. Tracking: {tracking_number}",
