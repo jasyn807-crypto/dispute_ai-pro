@@ -1,0 +1,199 @@
+sources:
+  neon-postgres:
+    kind: postgres
+    host: ep-crimson-dew-atva9n96-pooler.c-9.us-east-1.aws.neon.tech
+    port: 5432
+    database: neondb
+    user: neondb_owner
+    password: npg_ZHpC0Ei4LQdN
+
+tools:
+  # ── Users ───────────────────────────────────────────────────────────────────
+  get-user-by-id:
+    kind: postgres-sql
+    source: neon-postgres
+    description: Fetch a single user by their primary key ID.
+    parameters:
+      - name: user_id
+        type: integer
+        description: The user's ID.
+    statement: >
+      SELECT id, email, full_name, role, agency_id, is_active, created_at
+      FROM users WHERE id = $1;
+
+  list-users:
+    kind: postgres-sql
+    source: neon-postgres
+    description: List all users, optionally filtered by agency.
+    parameters:
+      - name: agency_id
+        type: integer
+        description: Optional agency ID to filter users. Pass 0 to list all.
+    statement: >
+      SELECT id, email, full_name, role, agency_id, is_active, created_at
+      FROM users
+      WHERE ($1 = 0 OR agency_id = $1)
+      ORDER BY created_at DESC;
+
+  # ── Clients ─────────────────────────────────────────────────────────────────
+  get-client-by-id:
+    kind: postgres-sql
+    source: neon-postgres
+    description: Fetch a single client record by ID.
+    parameters:
+      - name: client_id
+        type: integer
+        description: The client's ID.
+    statement: >
+      SELECT id, agency_id, first_name, last_name, email, phone,
+             credit_score, status, created_at
+      FROM clients WHERE id = $1;
+
+  list-clients:
+    kind: postgres-sql
+    source: neon-postgres
+    description: List clients for an agency, optionally filtered by status.
+    parameters:
+      - name: agency_id
+        type: integer
+        description: The agency ID to scope the query.
+      - name: status
+        type: string
+        description: Optional status filter (e.g. 'active', 'inactive'). Pass empty string for all.
+    statement: >
+      SELECT id, first_name, last_name, email, phone, credit_score, status, created_at
+      FROM clients
+      WHERE agency_id = $1
+        AND ($2 = '' OR status = $2)
+      ORDER BY created_at DESC;
+
+  # ── Dispute Letters ─────────────────────────────────────────────────────────
+  get-dispute-letter:
+    kind: postgres-sql
+    source: neon-postgres
+    description: Fetch a dispute letter by ID, including its status and content.
+    parameters:
+      - name: letter_id
+        type: integer
+        description: The dispute letter ID.
+    statement: >
+      SELECT id, client_id, bureau, status, mail_tracking_id,
+             sent_at, created_at, letter_content
+      FROM dispute_letters WHERE id = $1;
+
+  list-dispute-letters-for-client:
+    kind: postgres-sql
+    source: neon-postgres
+    description: List all dispute letters for a given client.
+    parameters:
+      - name: client_id
+        type: integer
+        description: The client ID.
+    statement: >
+      SELECT id, bureau, status, mail_tracking_id, sent_at, created_at
+      FROM dispute_letters
+      WHERE client_id = $1
+      ORDER BY created_at DESC;
+
+  # ── Dispute Items ───────────────────────────────────────────────────────────
+  list-dispute-items-for-client:
+    kind: postgres-sql
+    source: neon-postgres
+    description: List all dispute items for a client, with optional status filter.
+    parameters:
+      - name: client_id
+        type: integer
+        description: The client ID.
+      - name: status
+        type: string
+        description: Optional status filter (e.g. 'pending', 'deleted', 'verified'). Pass empty string for all.
+    statement: >
+      SELECT id, bureau, creditor_name, account_number, balance,
+             negative_type, dispute_reason, status, disputed_at, resolved_at
+      FROM dispute_items
+      WHERE client_id = $1
+        AND ($2 = '' OR status = $2)
+      ORDER BY created_at DESC;
+
+  dispute-item-summary:
+    kind: postgres-sql
+    source: neon-postgres
+    description: Count dispute items grouped by status for a given client.
+    parameters:
+      - name: client_id
+        type: integer
+        description: The client ID.
+    statement: >
+      SELECT status, COUNT(*) AS total
+      FROM dispute_items
+      WHERE client_id = $1
+      GROUP BY status;
+
+  # ── Credit Reports ──────────────────────────────────────────────────────────
+  list-credit-reports-for-client:
+    kind: postgres-sql
+    source: neon-postgres
+    description: List all credit reports uploaded for a client.
+    parameters:
+      - name: client_id
+        type: integer
+        description: The client ID.
+    statement: >
+      SELECT id, bureau, report_date, score, created_at
+      FROM credit_reports
+      WHERE client_id = $1
+      ORDER BY report_date DESC;
+
+  # ── Billing ─────────────────────────────────────────────────────────────────
+  list-billing-transactions:
+    kind: postgres-sql
+    source: neon-postgres
+    description: List billing transactions for a client.
+    parameters:
+      - name: client_id
+        type: integer
+        description: The client ID.
+    statement: >
+      SELECT id, amount, status, description, created_at
+      FROM billing_transactions
+      WHERE client_id = $1
+      ORDER BY created_at DESC;
+
+  # ── Audit Log ───────────────────────────────────────────────────────────────
+  list-audit-logs:
+    kind: postgres-sql
+    source: neon-postgres
+    description: Retrieve recent audit log entries, optionally filtered by user or client.
+    parameters:
+      - name: user_id
+        type: integer
+        description: Optional user ID filter. Pass 0 for all.
+      - name: client_id
+        type: integer
+        description: Optional client ID filter. Pass 0 for all.
+      - name: limit
+        type: integer
+        description: Max number of rows to return (e.g. 50).
+    statement: >
+      SELECT id, user_id, client_id, action, details, created_at
+      FROM audit_logs
+      WHERE ($1 = 0 OR user_id = $1)
+        AND ($2 = 0 OR client_id = $2)
+      ORDER BY created_at DESC
+      LIMIT $3;
+
+toolsets:
+  credit-repair-all:
+    description: Full toolset for the Credit Repair SaaS backend.
+    tools:
+      - get-user-by-id
+      - list-users
+      - get-client-by-id
+      - list-clients
+      - get-dispute-letter
+      - list-dispute-letters-for-client
+      - list-dispute-items-for-client
+      - dispute-item-summary
+      - list-credit-reports-for-client
+      - list-billing-transactions
+      - list-audit-logs
