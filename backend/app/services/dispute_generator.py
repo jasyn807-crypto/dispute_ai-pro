@@ -233,6 +233,42 @@ def generate_dispute_letter(
     otherwise falls back to templates with randomized phrasing.
     """
     import os
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")
+    if gemini_api_key:
+        try:
+            import httpx
+            prompt = (
+                f"You are an expert FCRA/FDCPA legal compliance dispute letter generator. "
+                f"Generate a professional, highly customized, legally compliant dispute letter under FCRA and FDCPA guidelines.\n"
+                f"Client Name: {client_first_name} {client_last_name}\n"
+                f"Client Address: {client_address or '[Address on file]'}\n"
+                f"Client SSN Last 4: {client_ssn_last4 or 'N/A'}\n"
+                f"Client DOB: {client_dob or 'N/A'}\n"
+                f"Credit Bureau: {bureau}\n"
+                f"Disputed Account Name: {account_name}\n"
+                f"Disputed Account Last 4 digits: {account_last4 or 'N/A'}\n"
+                f"Item Type: {item_type}\n"
+                f"Reported Balance: ${balance:.2f}\n"
+                f"Date Reported: {date_reported or 'N/A'}\n"
+                f"Original Creditor: {original_creditor or 'N/A'}\n\n"
+                f"Output only the generated letter content. Do not include extra conversational text or markdown styling. Just output the text of the letter."
+            )
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+            headers = {"Content-Type": "application/json"}
+            payload = {
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }]
+            }
+            res = httpx.post(url, headers=headers, json=payload, timeout=30.0)
+            if res.status_code == 200:
+                data = res.json()
+                text = data["candidates"][0]["content"]["parts"][0]["text"]
+                if text and text.strip():
+                    return text.strip()
+        except Exception:
+            pass
+
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if openai_api_key:
         try:
@@ -266,6 +302,7 @@ def generate_dispute_letter(
                 return content.strip()
         except Exception:
             pass
+
 
     today = datetime.now(timezone.utc).strftime("%B %d, %Y")
     bureau_lower = bureau.lower()
