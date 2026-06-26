@@ -79,8 +79,11 @@ def get_status(
         onboarding_steps=onboarding_steps,
         disputes_summary=disputes_summary,
         dispute_summary=dispute_summary,
-        documents_uploaded=docs_uploaded
+        documents_uploaded=docs_uploaded,
+        signed_agreement=client.signed_agreement,
+        signed_at=client.signed_at
     )
+
 
 @router.post("/upload", response_model=DocumentUploadResponse, status_code=status.HTTP_201_CREATED)
 def upload_document(
@@ -202,3 +205,42 @@ def get_client_billing(
         }
         for tx in transactions
     ]
+
+@router.post("/sign-agreement")
+def sign_agreement(
+    current_user: User = Depends(RoleChecker(["client"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Legally sign the B2B Credit Repair service agreement and disclosures.
+    """
+    from datetime import datetime, timezone
+    client = db.query(Client).filter(Client.user_id == current_user.id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client profile not found")
+        
+    client.signed_agreement = True
+    client.signed_at = datetime.now(timezone.utc)
+    
+    # If they have also uploaded documents, promote status to active
+    documents = db.query(ClientDocument).filter(ClientDocument.client_id == client.id).all()
+    has_id_proof = any(d.document_type in ["id_proof", "identity"] for d in documents)
+    has_address_proof = any(d.document_type in ["address_proof", "address"] for d in documents)
+    
+    if has_id_proof and has_address_proof:
+        client.status = "active"
+        client.onboarding_step = "complete"
+    else:
+        client.onboarding_step = "document_upload"
+        
+    db.commit()
+    db.refresh(client)
+    
+    return {
+        "message": "Agreement signed successfully",
+        "signed_agreement": client.signed_agreement,
+        "signed_at": client.signed_at,
+        "status": client.status,
+        "onboarding_step": client.onboarding_step
+    }
+

@@ -20,7 +20,10 @@ class ClientProfileSchema(BaseModel):
     phone: Optional[str] = None
     status: str
     onboarding_step: str
+    signed_agreement: bool
+    signed_at: Optional[datetime] = None
     created_at: datetime
+
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,7 +48,10 @@ class ClientListItem(BaseModel):
     phone: Optional[str] = None
     status: str
     onboarding_step: Optional[str] = None
+    signed_agreement: Optional[bool] = False
+    signed_at: Optional[datetime] = None
     created_at: datetime
+
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -64,6 +70,9 @@ class ClientStatus(BaseModel):
     updated_at: datetime
     onboarding_step: Optional[str] = None
     onboarding_steps: Optional[dict] = None
+    signed_agreement: Optional[bool] = False
+    signed_at: Optional[datetime] = None
+
     disputes_summary: Optional[dict] = None
     dispute_summary: Optional[dict] = None
     documents_uploaded: Optional[list] = None

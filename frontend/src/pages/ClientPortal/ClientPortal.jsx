@@ -41,7 +41,14 @@ export default function ClientPortal() {
   const [negativeItems, setNegativeItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(false);
 
+  // Onboarding agreement states
+  const [signing, setSigning] = useState(false);
+  const [sigName, setSigName] = useState('');
+  const [agreeChecked, setAgreeChecked] = useState(false);
+  const [sigError, setSigError] = useState('');
+
   // Fetch client status (overview data + documents)
+
   useEffect(() => {
     if (clientId) {
       fetchStatus();
@@ -83,7 +90,29 @@ export default function ClientPortal() {
     }
   }, [selectedReportId]);
 
+  const handleSignAgreement = async () => {
+    if (!agreeChecked) {
+      setSigError('You must check the box agreeing to the contract terms.');
+      return;
+    }
+    if (!sigName.trim()) {
+      setSigError('Please type your full name to sign.');
+      return;
+    }
+    setSigning(true);
+    setSigError('');
+    try {
+      await clientApi.signAgreement();
+      fetchStatus();
+    } catch (err) {
+      setSigError(err.message || 'Failed to sign agreement');
+    } finally {
+      setSigning(false);
+    }
+  };
+
   const fetchStatus = () => {
+
     setLoadingStatus(true);
     clientApi.getStatus()
       .then(data => {
@@ -198,6 +227,66 @@ export default function ClientPortal() {
 
       {/* Tab Contents */}
       <div className="portal-tab-content">
+        {clientStatus && !clientStatus.signed_agreement ? (
+          <div className="glass-card-static p-4 animate-fade-in flex-col gap-2" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <h2 className="text-center" style={{ color: 'var(--accent-blue)' }}>Consumer Agreement & Disclosures</h2>
+            <p className="text-muted text-center mb-2">Please read and sign the legal disclosures below to activate your account.</p>
+            
+            <div className="border-top-glass pt-2 flex-col gap-2" style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '10px', fontSize: '0.9rem', lineHeight: '1.5' }}>
+              <h4>1. Right to Cancel (3-Day Policy)</h4>
+              <p>
+                <strong>Right to Cancel:</strong> You may cancel this contract without any penalty or obligation at any time before midnight of the 3rd business day after the date on which the contract was signed. To cancel this agreement, submit a written cancellation request to the agency.
+              </p>
+              
+              <h4>2. No Advance Fee Prohibitions (CROA)</h4>
+              <p>
+                <strong>Advance Fee Restriction:</strong> No fee, deposit, or money can be charged or accepted by the Credit Repair Organization before services are fully performed. You will only be billed after dispute items are fully generated, processed, and dispatched.
+              </p>
+              
+              <h4>3. Consumer Credit File Rights (State & Federal Law)</h4>
+              <p>
+                You have the right to dispute inaccurate information in your credit report by contacting the credit bureau directly. You are not required to use a credit repair organization to do so. No one can legally remove accurate and timely negative information from a credit report.
+              </p>
+              <p>
+                Under the Fair Credit Reporting Act (FCRA), you have the right to obtain a free copy of your credit report from each bureau annually, and dispute any errors found directly.
+              </p>
+            </div>
+
+            {sigError && <div className="login-error mt-2">{sigError}</div>}
+
+            <div className="border-top-glass pt-3 mt-2 flex-col gap-1">
+              <label className="flex items-center gap-1" style={{ cursor: 'pointer', fontSize: '0.95rem' }}>
+                <input 
+                  type="checkbox" 
+                  checked={agreeChecked} 
+                  onChange={(e) => setAgreeChecked(e.target.checked)} 
+                />
+                I read and agree to the Credit Service Contract, Disclosure Statement, and 3-day cancellation rights.
+              </label>
+
+              <div className="form-group mt-2">
+                <label className="form-label">Type your Full Name to Sign *</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="e.g. John Doe"
+                  value={sigName} 
+                  onChange={(e) => setSigName(e.target.value)} 
+                />
+              </div>
+
+              <button 
+                className="btn btn-success mt-2" 
+                onClick={handleSignAgreement}
+                disabled={signing}
+              >
+                {signing ? 'Signing...' : '✓ Sign & Activate Account'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+
         
         {/* Tab 1: Overview */}
         {currentTab === 'overview' && (
@@ -534,7 +623,10 @@ export default function ClientPortal() {
           </div>
         )}
 
+          </>
+        )}
       </div>
     </div>
   );
 }
+

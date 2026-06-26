@@ -94,7 +94,9 @@ export const mailing = {
 export const client = {
   getStatus: () => request('/client/status'),
   upload: (formData) => request('/client/upload', { method: 'POST', body: formData }),
+  signAgreement: () => request('/client/sign-agreement', { method: 'POST' }),
 };
+
 
 // Billing
 export const billing = {
