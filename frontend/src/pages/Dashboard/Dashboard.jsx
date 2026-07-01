@@ -6,14 +6,15 @@ import './Dashboard.css';
 // Animated counter hook
 function useCountUp(target, duration = 1200) {
   const [count, setCount] = useState(0);
-  const ref = useRef(null);
 
   useEffect(() => {
     if (target === null || target === undefined) return;
     let start = 0;
     const end = parseInt(target, 10);
     if (isNaN(end)) { setCount(target); return; }
-    const step = Math.max(1, Math.floor(end / (duration / 16)));
+    if (end === 0) { setCount(0); return; }
+    
+    const step = Math.max(1, Math.ceil(end / (duration / 16)));
     const timer = setInterval(() => {
       start += step;
       if (start >= end) {
@@ -36,41 +37,43 @@ function DonutChart({ data, size = 160 }) {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="donut-chart">
-      {data.map((item, i) => {
-        const percentage = total > 0 ? item.value / total : 0;
-        const strokeDasharray = `${percentage * circumference} ${circumference}`;
-        const strokeDashoffset = -cumulative * circumference;
-        cumulative += percentage;
-        return (
-          <circle
-            key={i}
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={item.color}
-            strokeWidth="16"
-            strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            style={{ transition: 'all 0.8s ease', opacity: 0.9 }}
-          />
-        );
-      })}
-      <circle cx={size / 2} cy={size / 2} r={radius - 16} fill="var(--bg-secondary)" />
-      <text x={size / 2} y={size / 2 - 8} textAnchor="middle" fill="var(--text-primary)" fontSize="22" fontWeight="700">
-        {total}
-      </text>
-      <text x={size / 2} y={size / 2 + 14} textAnchor="middle" fill="var(--text-muted)" fontSize="11">
-        Total
-      </text>
-    </svg>
+    <div className="donut-chart-container" role="img" aria-label={`Dispute distribution chart. Total items: ${total}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="donut-chart">
+        {data.map((item, i) => {
+          const percentage = total > 0 ? item.value / total : 0;
+          const strokeDasharray = `${percentage * circumference} ${circumference}`;
+          const strokeDashoffset = -cumulative * circumference;
+          cumulative += percentage;
+          return (
+            <circle
+              key={i}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke={item.color}
+              strokeWidth="16"
+              strokeDasharray={strokeDasharray}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              style={{ transition: 'all 0.8s ease', opacity: 0.9 }}
+            />
+          );
+        })}
+        <circle cx={size / 2} cy={size / 2} r={radius - 16} fill="var(--bg-secondary)" />
+        <text x={size / 2} y={size / 2 - 8} textAnchor="middle" fill="var(--text-primary)" fontSize="22" fontWeight="700">
+          {total}
+        </text>
+        <text x={size / 2} y={size / 2 + 14} textAnchor="middle" fill="var(--text-muted)" fontSize="11">
+          Total Items
+        </text>
+      </svg>
+    </div>
   );
 }
 
-// Mock data for demo
+// Mock data for demo fallbacks
 const mockStats = {
   total_clients: 147,
   active_disputes: 38,
@@ -138,13 +141,37 @@ export default function Dashboard() {
           dashboard.getRecentActivity(),
           billing.getAgencyBilling(),
         ]);
-        if (s.status === 'fulfilled') setStats(s.value);
-        if (p.status === 'fulfilled') setPipeline(p.value);
-        if (d.status === 'fulfilled') setDisputeMetrics(d.value);
-        if (a.status === 'fulfilled') setActivity(a.value);
-        if (b.status === 'fulfilled') setBillingList(b.value || []);
+        
+        if (s.status === 'fulfilled') {
+          setStats({
+            total_clients: s.value.total_clients,
+            active_disputes: s.value.active_disputes,
+            success_rate: Math.round(s.value.success_rate * 100),
+            monthly_revenue: s.value.estimated_monthly_revenue,
+          });
+        }
+        
+        if (p.status === 'fulfilled') {
+          // In a real app, we'd fetch the actual clients. 
+          // For now, let's keep the mock cards but update counts if needed.
+          setPipeline(mockPipeline);
+        }
+
+        if (d.status === 'fulfilled') {
+          const metrics = d.value;
+          const transformed = [
+            { label: 'Resolved', value: (metrics.by_status?.deleted || 0) + (metrics.by_status?.verified || 0), color: '#10b981' },
+            { label: 'Pending', value: metrics.by_status?.pending || 0, color: '#f59e0b' },
+            { label: 'Mailed', value: metrics.by_status?.mailed || 0, color: '#3b82f6' },
+            { label: 'Draft', value: metrics.by_status?.draft || 0, color: '#8b5cf6' },
+          ].filter(m => m.value > 0);
+          setDisputeMetrics(transformed.length > 0 ? transformed : mockDisputeMetrics);
+        }
+
+        if (a.status === 'fulfilled' && a.value) setActivity(a.value);
+        if (b.status === 'fulfilled' && b.value) setBillingList(b.value || []);
       } catch (e) {
-        // Fall back to mock data
+        console.error('Dashboard data fetch error', e);
       } finally {
         setLoading(false);
       }
@@ -159,49 +186,50 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
+      <h1 className="sr-only">Agency Dashboard Overview</h1>
       {/* Stats Cards */}
-      <div className="stats-grid stagger-children">
+      <section className="stats-grid stagger-children" aria-label="Quick Stats">
         <div className="stat-card glass-card animate-fade-in-up" style={{ '--accent': 'var(--accent-blue)' }}>
-          <div className="stat-icon" style={{ background: 'var(--accent-blue-subtle)' }}>👥</div>
+          <div className="stat-icon" aria-hidden="true" style={{ background: 'var(--accent-blue-subtle)' }}>👥</div>
           <div className="stat-content">
             <span className="stat-value">{totalClients}</span>
             <span className="stat-label">Total Clients</span>
           </div>
-          <div className="stat-trend stat-trend-up">↗ +12%</div>
+          <div className="stat-trend stat-trend-up" aria-label="12 percent increase">↗ +12%</div>
         </div>
 
         <div className="stat-card glass-card animate-fade-in-up" style={{ '--accent': 'var(--accent-purple)' }}>
-          <div className="stat-icon" style={{ background: 'var(--accent-purple-subtle)' }}>⚖️</div>
+          <div className="stat-icon" aria-hidden="true" style={{ background: 'var(--accent-purple-subtle)' }}>⚖️</div>
           <div className="stat-content">
             <span className="stat-value">{activeDisputes}</span>
             <span className="stat-label">Active Disputes</span>
           </div>
-          <div className="stat-trend stat-trend-up">↗ +5</div>
+          <div className="stat-trend stat-trend-up" aria-label="5 new disputes">↗ +5</div>
         </div>
 
         <div className="stat-card glass-card animate-fade-in-up" style={{ '--accent': 'var(--accent-emerald)' }}>
-          <div className="stat-icon" style={{ background: 'var(--accent-emerald-subtle)' }}>📈</div>
+          <div className="stat-icon" aria-hidden="true" style={{ background: 'var(--accent-emerald-subtle)' }}>📈</div>
           <div className="stat-content">
             <span className="stat-value">{successRate}%</span>
             <span className="stat-label">Success Rate</span>
           </div>
-          <div className="stat-trend stat-trend-up">↗ +3%</div>
+          <div className="stat-trend stat-trend-up" aria-label="3 percent increase">↗ +3%</div>
         </div>
 
         <div className="stat-card glass-card animate-fade-in-up" style={{ '--accent': 'var(--accent-amber)' }}>
-          <div className="stat-icon" style={{ background: 'var(--accent-amber-subtle)' }}>💰</div>
+          <div className="stat-icon" aria-hidden="true" style={{ background: 'var(--accent-amber-subtle)' }}>💰</div>
           <div className="stat-content">
             <span className="stat-value">${revenue.toLocaleString()}</span>
             <span className="stat-label">Monthly Revenue</span>
           </div>
-          <div className="stat-trend stat-trend-up">↗ +18%</div>
+          <div className="stat-trend stat-trend-up" aria-label="18 percent increase">↗ +18%</div>
         </div>
-      </div>
+      </section>
 
       {/* Quick Actions */}
-      <div className="quick-actions">
+      <nav className="quick-actions" aria-label="Quick Actions">
         <Link to="/clients/new" className="btn btn-primary">
-          <span>+</span> Add Client
+          <span aria-hidden="true">+</span> Add Client
         </Link>
         <Link to="/clients" className="btn btn-ghost">
           📋 Upload Report
@@ -209,18 +237,18 @@ export default function Dashboard() {
         <Link to="/disputes" className="btn btn-ghost">
           ⚖️ New Dispute
         </Link>
-      </div>
+      </nav>
 
       {/* Main Grid */}
       <div className="dashboard-grid">
         {/* Pipeline */}
-        <div className="dashboard-section pipeline-section">
-          <h3 className="section-title">Client Pipeline</h3>
+        <section className="dashboard-section pipeline-section" aria-labelledby="pipeline-title">
+          <h2 id="pipeline-title" className="section-title">Client Pipeline</h2>
           <div className="pipeline-columns">
             {pipelineConfig.map((col) => (
               <div key={col.key} className="pipeline-column">
                 <div className="pipeline-column-header">
-                  <span className="pipeline-column-icon">{col.icon}</span>
+                  <span className="pipeline-column-icon" aria-hidden="true">{col.icon}</span>
                   <span className="pipeline-column-label">{col.label}</span>
                   <span className="pipeline-column-count" style={{ background: col.color + '22', color: col.color }}>
                     {pipeline[col.key]?.length || 0}
@@ -229,7 +257,7 @@ export default function Dashboard() {
                 <div className="pipeline-cards">
                   {(pipeline[col.key] || []).map((client) => (
                     <Link to={`/clients/${client.id}`} key={client.id} className="pipeline-card glass-card">
-                      <div className="pipeline-card-avatar" style={{ background: col.color + '33', color: col.color }}>
+                      <div className="pipeline-card-avatar" aria-hidden="true" style={{ background: col.color + '33', color: col.color }}>
                         {client.name?.[0] || '?'}
                       </div>
                       <div className="pipeline-card-info">
@@ -245,34 +273,34 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* Bottom Row */}
         <div className="dashboard-bottom-grid">
           {/* Dispute Metrics */}
-          <div className="glass-card-static dashboard-metrics">
-            <h3 className="section-title">Dispute Metrics</h3>
+          <section className="glass-card-static dashboard-metrics" aria-labelledby="metrics-title">
+            <h2 id="metrics-title" className="section-title">Dispute Metrics</h2>
             <div className="metrics-content">
               <DonutChart data={disputeMetrics} />
-              <div className="metrics-legend">
+              <div className="metrics-legend" role="list">
                 {disputeMetrics.map((item, i) => (
-                  <div key={i} className="metrics-legend-item">
-                    <span className="metrics-legend-dot" style={{ background: item.color }}></span>
+                  <div key={i} className="metrics-legend-item" role="listitem">
+                    <span className="metrics-legend-dot" aria-hidden="true" style={{ background: item.color }}></span>
                     <span className="metrics-legend-label">{item.label}</span>
                     <span className="metrics-legend-value">{item.value}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Recent Activity */}
-          <div className="glass-card-static dashboard-activity">
-            <h3 className="section-title">Recent Activity</h3>
-            <div className="activity-list">
+          <section className="glass-card-static dashboard-activity" aria-labelledby="activity-title">
+            <h2 id="activity-title" className="section-title">Recent Activity</h2>
+            <div className="activity-list" role="log" aria-live="polite">
               {activity.map((item) => (
                 <div key={item.id} className="activity-item">
-                  <div className="activity-icon">{item.icon}</div>
+                  <div className="activity-icon" aria-hidden="true">{item.icon}</div>
                   <div className="activity-content">
                     <span className="activity-message">{item.message}</span>
                     <span className="activity-time">{item.time}</span>
@@ -280,13 +308,13 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         </div>
 
         {/* Billing Transactions */}
-        <div className="glass-card-static mt-3 p-3 w-full" style={{ marginTop: '24px' }}>
-          <h3 className="section-title mb-2">Agency Billing & Transaction Logs</h3>
-          <p className="page-subtitle mb-3">Certified mail dispatch and AI dispute letter generation fees ($5.00/event).</p>
+        <section className="glass-card-static mt-3 p-3 w-full" aria-labelledby="billing-title" style={{ marginTop: '24px' }}>
+          <h2 id="billing-title" className="section-title mb-2">Agency Billing & Transaction Logs</h2>
+          <p className="page-subtitle mb-3 text-muted">Certified mail dispatch and AI dispute letter generation fees ($5.00/event).</p>
           {billingList.length === 0 ? (
             <p className="text-muted">No billing transactions recorded yet.</p>
           ) : (
@@ -311,8 +339,7 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-        </div>
-
+        </section>
       </div>
     </div>
   );

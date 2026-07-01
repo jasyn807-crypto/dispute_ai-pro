@@ -34,96 +34,106 @@ export default function Login() {
   return (
     <div className="login-page">
       {/* Animated background */}
-      <div className="login-bg">
+      <div className="login-bg" aria-hidden="true">
         <div className="login-bg-orb login-bg-orb-1"></div>
         <div className="login-bg-orb login-bg-orb-2"></div>
         <div className="login-bg-orb login-bg-orb-3"></div>
         <div className="login-bg-grid"></div>
       </div>
 
-      <div className="login-container animate-scale-in">
+      <main className="login-container animate-scale-in">
         {/* Logo */}
-        <div className="login-header">
+        <header className="login-header">
           <div className="login-logo">
-            <div className="login-logo-icon">⚡</div>
+            <div className="login-logo-icon" aria-hidden="true">⚡</div>
             <div>
               <h1 className="login-logo-name">CreditEngine</h1>
               <p className="login-logo-sub">AI-Powered Credit Repair</p>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Mode Toggle */}
-        <div className="login-mode-toggle">
+        <nav className="login-mode-toggle" aria-label="Login Mode Selection">
           <button
+            type="button"
             className={`login-mode-btn ${mode === 'agency' ? 'active' : ''}`}
             onClick={() => setMode('agency')}
+            aria-pressed={mode === 'agency'}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
               <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
             Agency Staff
           </button>
           <button
+            type="button"
             className={`login-mode-btn ${mode === 'client' ? 'active' : ''}`}
             onClick={() => setMode('client')}
+            aria-pressed={mode === 'client'}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
             Client Portal
           </button>
-        </div>
+        </nav>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
-          {error && (
-            <div className="login-error animate-fade-in">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="15" y1="9" x2="9" y2="15"></line>
-                <line x1="9" y1="9" x2="15" y2="15"></line>
-              </svg>
-              {error}
-            </div>
-          )}
+          <div role="alert" aria-live="polite">
+            {error && (
+              <div className="login-error animate-fade-in">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                {error}
+              </div>
+            )}
+          </div>
 
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label" htmlFor="email">Email Address</label>
             <input
+              id="email"
               type="email"
               className="form-input"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label" htmlFor="password">Password</label>
             <input
+              id="password"
               type="password"
               className="form-input"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
           <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading}>
             {loading ? (
               <>
-                <div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }}></div>
-                Signing in...
+                <div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} aria-hidden="true"></div>
+                <span>Signing in...</span>
               </>
             ) : (
               <>
-                Sign In
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <span>Sign In</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
                 </svg>
@@ -133,26 +143,26 @@ export default function Login() {
         </form>
 
         {/* Footer Links */}
-        <div className="login-footer">
+        <footer className="login-footer">
           <p>
             Don't have an account?{' '}
             <Link to="/register">Create one</Link>
           </p>
-        </div>
-      </div>
+        </footer>
+      </main>
 
       {/* Feature badges */}
-      <div className="login-features">
+      <aside className="login-features" aria-label="Platform Features">
         <div className="login-feature-item">
-          <span>🔒</span> Bank-Level Security
+          <span aria-hidden="true">🔒</span> Bank-Level Security
         </div>
         <div className="login-feature-item">
-          <span>🤖</span> AI-Powered Analysis
+          <span aria-hidden="true">🤖</span> AI-Powered Analysis
         </div>
         <div className="login-feature-item">
-          <span>📊</span> Real-Time Tracking
+          <span aria-hidden="true">📊</span> Real-Time Tracking
         </div>
-      </div>
+      </aside>
     </div>
   );
 }

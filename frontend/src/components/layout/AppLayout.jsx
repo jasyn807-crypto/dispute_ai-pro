@@ -6,11 +6,14 @@ import './AppLayout.css';
 export default function AppLayout() {
   return (
     <div className="app-layout">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <Sidebar />
-      <Navbar />
-      <main className="app-content">
-        <Outlet />
-      </main>
+      <div className="app-main-wrapper">
+        <Navbar />
+        <main className="app-content" id="main-content" role="main">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

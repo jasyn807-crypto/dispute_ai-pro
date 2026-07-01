@@ -24,19 +24,19 @@ IDENTITY_PARAGRAPHS = [
         "I am writing to formally dispute the accuracy of certain information "
         "in my credit file maintained by your bureau. Pursuant to the Fair Credit "
         "Reporting Act (FCRA), 15 U.S.C. § 1681i, I am requesting that you "
-        "investigate and correct or remove the inaccurate information identified below."
+        "investigate and completely remove the inaccurate information identified below."
     ),
     (
         "Under the provisions of the Fair Credit Reporting Act, Section 611 "
         "(15 U.S.C. § 1681i), I am exercising my right to dispute the following "
         "item(s) that appear on my credit report. I believe the information is "
-        "inaccurate and request a thorough investigation."
+        "inaccurate and request a thorough investigation and removal of this negative item."
     ),
     (
         "This letter serves as a formal dispute regarding information currently "
         "reported on my credit file. In accordance with the Fair Credit Reporting "
         "Act (FCRA), specifically Section 611, I am requesting verification of "
-        "the disputed item(s) listed below."
+        "the disputed item(s) listed below, and that you delete it from my record."
     ),
 ]
 
@@ -67,14 +67,14 @@ DISPUTE_REASON_TEMPLATES = {
             "The late payment notation on the account with {account_name} "
             "(account ending in {account_last4}) is inaccurate. I have always "
             "made payments on this account in a timely manner, and I request "
-            "that this derogatory mark be investigated and corrected per FCRA "
+            "that this derogatory mark be investigated and completely removed per FCRA "
             "Section 611."
         ),
         (
             "I dispute the reported late payment(s) on my {account_name} account "
             "(****{account_last4}). My records indicate that all payments were "
             "made by their respective due dates. Please conduct a reinvestigation "
-            "as required under 15 U.S.C. § 1681i."
+            "as required under 15 U.S.C. § 1681i and remove this inaccurate record."
         ),
     ],
     "charge_off": [
@@ -95,7 +95,7 @@ DISPUTE_REASON_TEMPLATES = {
         (
             "The bankruptcy record appearing on my credit report is inaccurate. "
             "I request that you verify this public record with the appropriate "
-            "court and correct any discrepancies in accordance with FCRA Section 611."
+            "court and remove this record in accordance with FCRA Section 611."
         ),
     ],
     "inquiry": [
@@ -155,15 +155,15 @@ CLOSING_PARAGRAPHS = [
     (
         "Under FCRA Section 611(a)(1), you are required to conduct a reasonable "
         "investigation within 30 days of receiving this dispute. If the information "
-        "cannot be verified, it must be promptly deleted or modified. Please send "
-        "me an updated copy of my credit report reflecting any changes made as a "
+        "cannot be verified, it must be promptly deleted. Please send "
+        "me an updated copy of my credit report reflecting the deletion made as a "
         "result of this investigation."
     ),
     (
         "Please be advised that under the FCRA, you must complete your investigation "
         "within 30 days and notify me of the results. If the disputed information "
-        "is found to be inaccurate or unverifiable, I expect it to be corrected "
-        "or removed immediately. I request a free copy of my updated credit report "
+        "is found to be inaccurate or unverifiable, I expect it to be "
+        "removed immediately. I request a free copy of my updated credit report "
         "upon completion of the investigation."
     ),
     (
@@ -251,6 +251,9 @@ def generate_dispute_letter(
                 f"Reported Balance: ${balance:.2f}\n"
                 f"Date Reported: {date_reported or 'N/A'}\n"
                 f"Original Creditor: {original_creditor or 'N/A'}\n\n"
+                f"IMPORTANT: The goal of this dispute is to use reporting errors/inaccuracies to get the negative item completely removed or deleted from the client's credit file. "
+                f"Do NOT ask the credit bureau to correct the details or fix the errors while leaving the negative item active. "
+                f"Demand the complete removal or deletion of the entire negative tradeline due to the inaccuracies.\n\n"
                 f"Output only the generated letter content. Do not include extra conversational text or markdown styling. Just output the text of the letter."
             )
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
@@ -287,6 +290,9 @@ def generate_dispute_letter(
                 f"Reported Balance: ${balance:.2f}\n"
                 f"Date Reported: {date_reported or 'N/A'}\n"
                 f"Original Creditor: {original_creditor or 'N/A'}\n\n"
+                f"IMPORTANT: The goal of this dispute is to use reporting errors/inaccuracies to get the negative item completely removed or deleted from the client's credit file. "
+                f"Do NOT ask the credit bureau to correct the details or fix the errors while leaving the negative item active. "
+                f"Demand the complete removal or deletion of the entire negative tradeline due to the inaccuracies.\n\n"
                 f"Output only the generated letter content. Do not include extra conversational text."
             )
             response = client.chat.completions.create(

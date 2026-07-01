@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
@@ -22,10 +22,10 @@ export default function Sidebar() {
   const navItems = isClient ? clientNavItems : agencyNavItems;
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" aria-label="Sidebar Navigation">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">⚡</div>
+          <div className="sidebar-logo-icon" aria-hidden="true">⚡</div>
           <div className="sidebar-logo-text">
             <span className="sidebar-logo-name">CreditEngine</span>
             <span className="sidebar-logo-sub">AI Platform</span>
@@ -33,28 +33,32 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="sidebar-nav">
-        <div className="sidebar-nav-label">MENU</div>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/dashboard' || item.path === '/portal'}
-            className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <span className="sidebar-nav-icon">{item.icon}</span>
-            <span className="sidebar-nav-text">{item.label}</span>
-          </NavLink>
-        ))}
+      <nav className="sidebar-nav" aria-label="Main Menu">
+        <div className="sidebar-nav-label" id="menu-label">MENU</div>
+        <ul className="sidebar-nav-list" aria-labelledby="menu-label">
+          {navItems.map((item) => (
+            <li key={item.path}>
+              <NavLink
+                to={item.path}
+                end={item.path === '/dashboard' || item.path === '/portal'}
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                aria-current={({ isActive }) => isActive ? 'page' : undefined}
+              >
+                <span className="sidebar-nav-icon" aria-hidden="true">{item.icon}</span>
+                <span className="sidebar-nav-text">{item.label}</span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
       </nav>
 
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="sidebar-user-avatar">
+          <div className="sidebar-user-avatar" aria-hidden="true">
             {user?.name?.[0] || user?.email?.[0] || 'U'}
           </div>
           <div className="sidebar-user-info">
-            <span className="sidebar-user-name">{user?.name || user?.email}</span>
+            <span className="sidebar-user-name">{user?.agency_profile?.name || user?.name || user?.email}</span>
             <span className="sidebar-user-role">{isClient ? 'Client' : 'Agency Staff'}</span>
           </div>
         </div>

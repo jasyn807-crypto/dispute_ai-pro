@@ -7,10 +7,31 @@ from app.api.deps import get_current_user
 from app.models.user import User, UserRole
 from app.models.agency import Agency
 from app.models.client import Client
-from app.schemas.auth import UserRegister, Token, UserResponse
+from app.schemas.auth import UserRegister, Token, UserResponse, UserLogin
 from app.schemas.client import UserMeResponse, AgencyProfileSchema, ClientProfileSchema
 
 router = APIRouter()
+
+@router.post("/login", response_model=Token)
+def login_json(user_in: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == user_in.email).first()
+    if not user or not verify_password(user_in.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Inactive user"
+        )
+
+    access_token = create_access_token(data={"sub": str(user.id), "role": user.role})
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "role": user.role
+    }
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_in: UserRegister, db: Session = Depends(get_db)):
