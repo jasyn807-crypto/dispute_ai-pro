@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { client as clientApi, documents as docsApi, disputes as disputesApi, creditReports, billing } from '../../services/api';
 import './ClientPortal.css';
@@ -26,6 +26,8 @@ export default function ClientPortal() {
   const [docType, setDocType] = useState('id_proof');
   const [docStatusMsg, setDocStatusMsg] = useState({ type: '', text: '' });
   const [uploadedDocsList, setUploadedDocsList] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // Billing tab states
   const [billingList, setBillingList] = useState([]);
@@ -40,6 +42,52 @@ export default function ClientPortal() {
   const [selectedReportId, setSelectedReportId] = useState('');
   const [negativeItems, setNegativeItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(false);
+
+  // Drag and drop event handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setSelectedFile(file);
+      triggerUpload(file);
+    }
+  };
+
+  const triggerUpload = async (file) => {
+    if (!file || !clientId) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('document_type', docType);
+    formData.append('client_id', clientId);
+
+    setUploadingDoc(true);
+    setDocStatusMsg({ type: 'blue', text: 'Uploading document...' });
+
+    try {
+      await docsApi.upload(formData);
+      setDocStatusMsg({ type: 'emerald', text: 'Document uploaded successfully!' });
+      setSelectedFile(null);
+      loadDocuments();
+      fetchStatus();
+    } catch (err) {
+      setDocStatusMsg({ type: 'danger', text: 'Upload failed: ' + err.message });
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
 
   // Onboarding agreement states
   const [signing, setSigning] = useState(false);
@@ -145,27 +193,11 @@ export default function ClientPortal() {
       .catch(() => {});
   };
 
-  const handleDocUpload = async (e) => {
+  const handleDocUpload = (e) => {
     const file = e.target.files[0];
-    if (!file || !clientId) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('document_type', docType);
-    formData.append('client_id', clientId);
-
-    setUploadingDoc(true);
-    setDocStatusMsg({ type: 'blue', text: 'Uploading document...' });
-
-    try {
-      await docsApi.upload(formData);
-      setDocStatusMsg({ type: 'emerald', text: 'Document uploaded successfully!' });
-      loadDocuments();
-      fetchStatus();
-    } catch (err) {
-      setDocStatusMsg({ type: 'danger', text: 'Upload failed: ' + err.message });
-    } finally {
-      setUploadingDoc(false);
+    if (file) {
+      setSelectedFile(file);
+      triggerUpload(file);
     }
   };
 
@@ -196,32 +228,62 @@ export default function ClientPortal() {
         <button 
           className={`portal-tab-btn ${currentTab === 'overview' ? 'active' : ''}`}
           onClick={() => navigate('/portal')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
         >
-          🏠 Overview
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          Overview
         </button>
         <button 
           className={`portal-tab-btn ${currentTab === 'reports' ? 'active' : ''}`}
           onClick={() => navigate('/portal/reports')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
         >
-          📋 My Reports
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          My Reports
         </button>
         <button 
           className={`portal-tab-btn ${currentTab === 'disputes' ? 'active' : ''}`}
           onClick={() => navigate('/portal/disputes')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
         >
-          ⚖️ My Disputes
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="18" cy="18" r="3" />
+            <line x1="6" y1="15" x2="6" y2="9" />
+            <line x1="18" y1="15" x2="18" y2="9" />
+            <line x1="6" y1="9" x2="18" y2="9" />
+            <line x1="12" y1="9" x2="12" y2="3" />
+          </svg>
+          My Disputes
         </button>
         <button 
           className={`portal-tab-btn ${currentTab === 'documents' ? 'active' : ''}`}
           onClick={() => navigate('/portal/documents')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
         >
-          📁 Documents
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          Documents
         </button>
         <button 
           className={`portal-tab-btn ${currentTab === 'billing' ? 'active' : ''}`}
           onClick={() => navigate('/portal/billing')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
         >
-          💳 Billing
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
+          </svg>
+          Billing
         </button>
       </div>
 
@@ -273,6 +335,12 @@ export default function ClientPortal() {
                   value={sigName} 
                   onChange={(e) => setSigName(e.target.value)} 
                 />
+                {sigName && (
+                  <div className="signature-preview mt-2" style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', padding: '12px 20px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--border-radius-md)', border: '1px dashed var(--glass-border)', marginTop: '12px' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Digital Signature Preview</span>
+                    <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '2rem', color: 'var(--accent-blue)', textShadow: '0 0 10px var(--accent-blue-glow)' }}>{sigName}</span>
+                  </div>
+                )}
               </div>
 
               <button 
@@ -315,18 +383,36 @@ export default function ClientPortal() {
               {/* Timeline chart */}
               <div className="score-chart-container mt-2">
                 <h4>Credit Score Progression</h4>
-                <div className="score-chart mt-2">
-                  {scoreTimeline.map((pt, i) => (
-                    <div key={i} className="chart-bar-group">
-                      <div className="chart-bars">
-                        <div className="chart-bar bar-eq" style={{ height: `${(pt.Equifax - 400) / 4}px` }}></div>
-                        <div className="chart-bar bar-ex" style={{ height: `${(pt.Experian - 400) / 4}px` }}></div>
-                        <div className="chart-bar bar-tu" style={{ height: `${(pt.TransUnion - 400) / 4}px` }}></div>
+                  <div className="score-chart mt-2">
+                    {scoreTimeline.map((pt, i) => (
+                      <div key={i} className="chart-bar-group">
+                        <div className="chart-bars">
+                          <div 
+                            className="chart-bar bar-eq" 
+                            style={{ height: `${Math.max(5, Math.min(100, ((pt.Equifax - 300) / 550) * 100))}%` }}
+                            title={`Equifax: ${pt.Equifax}`}
+                          >
+                            <span className="chart-bar-tooltip">Equifax: {pt.Equifax}</span>
+                          </div>
+                          <div 
+                            className="chart-bar bar-ex" 
+                            style={{ height: `${Math.max(5, Math.min(100, ((pt.Experian - 300) / 550) * 100))}%` }}
+                            title={`Experian: ${pt.Experian}`}
+                          >
+                            <span className="chart-bar-tooltip">Experian: {pt.Experian}</span>
+                          </div>
+                          <div 
+                            className="chart-bar bar-tu" 
+                            style={{ height: `${Math.max(5, Math.min(100, ((pt.TransUnion - 300) / 550) * 100))}%` }}
+                            title={`TransUnion: ${pt.TransUnion}`}
+                          >
+                            <span className="chart-bar-tooltip">TransUnion: {pt.TransUnion}</span>
+                          </div>
+                        </div>
+                        <span className="chart-label">{pt.month}</span>
                       </div>
-                      <span className="chart-label">{pt.month}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
                 <div className="chart-legend flex justify-center gap-2 mt-2">
                   <span className="legend-item"><span className="legend-dot bar-eq"></span> Equifax</span>
                   <span className="legend-item"><span className="legend-dot bar-ex"></span> Experian</span>
@@ -352,7 +438,7 @@ export default function ClientPortal() {
                       <div className="progress-bar-bg">
                         <div 
                           className="progress-bar-fill bar-eq" 
-                          style={{ width: `${clientStatus?.disputes_summary?.total > 0 ? (clientStatus.disputes_summary.pending / clientStatus.disputes_summary.total) * 100 : 0}%` }}
+                          style={{ width: `${Math.max(0, Math.min(100, clientStatus?.disputes_summary?.total > 0 ? (clientStatus.disputes_summary.pending / clientStatus.disputes_summary.total) * 100 : 0))}%` }}
                         ></div>
                       </div>
                     </div>
@@ -367,7 +453,7 @@ export default function ClientPortal() {
                       <div className="progress-bar-bg">
                         <div 
                           className="progress-bar-fill bar-tu" 
-                          style={{ width: `${clientStatus?.disputes_summary?.total > 0 ? (clientStatus.disputes_summary.deleted / clientStatus.disputes_summary.total) * 100 : 0}%` }}
+                          style={{ width: `${Math.max(0, Math.min(100, clientStatus?.disputes_summary?.total > 0 ? (clientStatus.disputes_summary.deleted / clientStatus.disputes_summary.total) * 100 : 0))}%` }}
                         ></div>
                       </div>
                     </div>
@@ -380,7 +466,7 @@ export default function ClientPortal() {
                       <div className="progress-bar-bg">
                         <div 
                           className="progress-bar-fill bar-ex" 
-                          style={{ width: `${clientStatus?.disputes_summary?.total > 0 ? (clientStatus.disputes_summary.verified / clientStatus.disputes_summary.total) * 100 : 0}%` }}
+                          style={{ width: `${Math.max(0, Math.min(100, clientStatus?.disputes_summary?.total > 0 ? (clientStatus.disputes_summary.verified / clientStatus.disputes_summary.total) * 100 : 0))}%` }}
                         ></div>
                       </div>
                     </div>
@@ -415,8 +501,15 @@ export default function ClientPortal() {
               </div>
 
               {reportsList.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-state-icon">📋</div>
+                <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
+                  <div className="empty-state-icon" style={{ fontSize: '3rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                  </div>
                   <h3>No reports uploaded yet</h3>
                   <p>Contact your agency staff to upload and parse your credit bureau files.</p>
                 </div>
@@ -475,8 +568,17 @@ export default function ClientPortal() {
                   <div className="spinner spinner-lg" style={{ margin: '0 auto' }}></div>
                 </div>
               ) : myDisputesList.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-state-icon">⚖️</div>
+                <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
+                  <div className="empty-state-icon" style={{ fontSize: '3rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="6" cy="18" r="3" />
+                      <circle cx="18" cy="18" r="3" />
+                      <line x1="6" y1="15" x2="6" y2="9" />
+                      <line x1="18" y1="15" x2="18" y2="9" />
+                      <line x1="6" y1="9" x2="18" y2="9" />
+                      <line x1="12" y1="9" x2="12" y2="3" />
+                    </svg>
+                  </div>
                   <h3>No disputes initiated</h3>
                   <p>When negative items are disputed on your reports, their progress letters will show up here.</p>
                 </div>
@@ -519,7 +621,7 @@ export default function ClientPortal() {
               )}
 
               <div className="upload-options-row flex gap-2 mb-3">
-                <div className="form-group flex-1">
+                <div className="form-group flex-1" style={{ marginBottom: '0' }}>
                   <label className="form-label">Document Type</label>
                   <select 
                     className="form-select"
@@ -532,19 +634,49 @@ export default function ClientPortal() {
                     <option value="other">Other Document</option>
                   </select>
                 </div>
+              </div>
 
-                <div className="form-group flex-col justify-end" style={{ flex: '2' }}>
-                  <label className="form-label">Select File</label>
-                  <label className="btn btn-primary w-full" style={{ cursor: 'pointer' }}>
-                    {uploadingDoc ? 'Uploading...' : '📁 Choose & Upload File'}
-                    <input 
-                      type="file" 
-                      onChange={handleDocUpload}
-                      disabled={uploadingDoc}
-                      style={{ display: 'none' }} 
-                    />
-                  </label>
-                </div>
+              {/* Drag and Drop Zone */}
+              <div 
+                className={`upload-dropzone ${dragActive ? 'drag-active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById('file-upload-input').click()}
+              >
+                <input 
+                  id="file-upload-input"
+                  type="file" 
+                  onChange={handleDocUpload}
+                  disabled={uploadingDoc}
+                  style={{ display: 'none' }} 
+                />
+                
+                <svg className="upload-dropzone-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+
+                <p className="upload-dropzone-text">
+                  {uploadingDoc ? 'Uploading...' : 'Drag & drop your file here, or click to browse'}
+                </p>
+                <p className="upload-dropzone-subtext">
+                  Supports PDF, PNG, JPG up to 10MB
+                </p>
+
+                {selectedFile && (
+                  <div className="upload-file-info" onClick={(e) => e.stopPropagation()}>
+                    <div className="upload-file-info-icon">
+                      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <div className="upload-file-info-details">
+                      <span className="upload-file-name">{selectedFile.name}</span>
+                      <span className="upload-file-size">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Uploaded Documents List */}
@@ -555,9 +687,12 @@ export default function ClientPortal() {
                 ) : (
                   <div className="uploaded-docs-list flex-col gap-1 mt-2">
                     {uploadedDocsList.map(doc => (
-                      <div key={doc.id} className="uploaded-doc-row flex justify-between items-center glass-card">
-                        <span className="doc-name-cell">
-                          📁 <strong>[{doc.document_type}]</strong> {doc.filename}
+                      <div key={doc.id} className="uploaded-doc-row flex justify-between items-center glass-card" style={{ padding: '12px 16px', marginBottom: '8px' }}>
+                        <span className="doc-name-cell" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-blue)' }}>
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                          </svg>
+                          <strong>[{doc.document_type}]</strong> {doc.filename}
                         </span>
                         <span className="doc-date-cell text-muted" style={{ fontSize: '0.8rem' }}>
                           {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'Just now'}
@@ -601,22 +736,47 @@ export default function ClientPortal() {
               ) : billingList.length === 0 ? (
                 <p className="text-muted mt-1">No billing transactions found.</p>
               ) : (
-                <div className="uploaded-docs-list flex-col gap-1 mt-2">
-                  {billingList.map(tx => (
-                    <div key={tx.id} className="uploaded-doc-row flex justify-between items-center glass-card">
-                      <span className="doc-name-cell">
-                        💳 <strong>{tx.description}</strong>
-                      </span>
-                      <div className="flex gap-2 items-center">
-                        <span className="text-glow" style={{ fontWeight: 'bold' }}>
-                          ${tx.amount.toFixed(2)}
-                        </span>
-                        <span className={`badge ${tx.status === 'paid' ? 'badge-emerald' : tx.status === 'pending' ? 'badge-amber' : 'badge-red'}`}>
-                          {tx.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="transaction-table-wrapper">
+                  <table className="transaction-table">
+                    <thead>
+                      <tr>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: 'right' }}>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {billingList.map((tx) => (
+                        <tr key={tx.id} className="transaction-row">
+                          <td>
+                            <span className="transaction-desc">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-blue)', display: 'inline-block', verticalAlign: 'middle', marginRight: '8px' }}>
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                <line x1="1" y1="10" x2="23" y2="10" />
+                              </svg>
+                              {tx.description}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="transaction-date">
+                              {new Date(tx.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${tx.status === 'paid' ? 'badge-emerald' : tx.status === 'pending' ? 'badge-amber' : 'badge-red'}`}>
+                              {tx.status}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <span className="transaction-amount">
+                              ${(tx.amount || 0).toFixed(2)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

@@ -172,6 +172,10 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
+  .sidebar {
+    width: 72px;
+  }
+
   .sidebar-logo-text,
   .sidebar-nav-text,
   .sidebar-nav-label,

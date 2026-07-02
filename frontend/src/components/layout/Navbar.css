@@ -131,6 +131,12 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .navbar {
+    left: 72px;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar {
     left: 0;

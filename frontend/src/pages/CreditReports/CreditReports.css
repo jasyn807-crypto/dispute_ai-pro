@@ -1,7 +1,7 @@
 /* Credit Reports Styles */
 
 .credit-reports-page {
-  padding: 1rem;
+  /* Padding managed by parent wrapper */
 }
 
 .credit-reports-grid {

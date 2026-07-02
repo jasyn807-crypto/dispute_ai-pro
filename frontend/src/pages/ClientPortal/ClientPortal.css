@@ -1,7 +1,7 @@
 /* Client Portal Page Styles */
 
 .client-portal-page {
-  padding: 1rem;
+  /* Padding managed by parent wrapper */
 }
 
 .portal-welcome-banner {
@@ -230,4 +230,127 @@
   .portal-overview-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Score chart tooltips */
+.chart-bar {
+  position: relative;
+}
+
+.chart-bar-tooltip {
+  visibility: hidden;
+  position: absolute;
+  bottom: 105%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--glass-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.chart-bar:hover .chart-bar-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* Upload Dropzone */
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: var(--bg-card);
+  border: 2px dashed var(--glass-border);
+  border-radius: var(--border-radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.upload-dropzone:hover, .upload-dropzone.drag-active {
+  border-color: var(--accent-blue);
+  background: var(--bg-card-hover);
+  box-shadow: 0 0 15px var(--accent-blue-glow);
+}
+
+.upload-dropzone-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--accent-blue);
+  margin-bottom: var(--space-3);
+  transition: transform var(--transition-spring);
+}
+
+.upload-dropzone:hover .upload-dropzone-icon {
+  transform: translateY(-4px) scale(1.1);
+}
+
+.upload-dropzone-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.upload-dropzone-subtext {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.upload-file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-tertiary);
+  padding: 12px 16px;
+  border-radius: var(--border-radius-md);
+  width: 100%;
+  max-width: 400px;
+  margin-top: 16px;
+  border: 1px solid var(--glass-border);
+  animation: fadeIn 0.3s ease;
+}
+
+.upload-file-info-icon {
+  color: var(--accent-emerald);
+  display: flex;
+  align-items: center;
+}
+
+.upload-file-info-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-file-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.upload-file-size {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }

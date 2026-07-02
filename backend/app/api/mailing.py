@@ -51,24 +51,7 @@ def _get_agency_client_ids(user: User, db: Session) -> list[int]:
 
 # ── POST /api/mailing/dispatch ─────────────────────────────────────────────
 
-@router.post("/dispatch", response_model=MailDispatchResponse, status_code=status.HTTP_201_CREATED)
-def dispatch_mail(
-    body: MailDispatchRequest,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Simulate mailing a dispute letter to a credit bureau."""
-    letter = db.query(DisputeLetter).filter(DisputeLetter.id == body.dispute_letter_id).first()
-    if not letter:
-        raise HTTPException(status_code=404, detail="Dispute letter not found")
 
-    allowed_ids = _get_agency_client_ids(current_user, db)
-    if letter.client_id not in allowed_ids:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    if not letter.letter_content or not letter.letter_content.strip():
-        raise HTTPException(status_code=400, detail="Letter has no content. Generate a letter first.")
 
 def perform_mail_dispatch(
     letter: DisputeLetter,
@@ -230,7 +213,7 @@ def dispatch_mail(
 
 
     return MailDispatchResponse(
-        message=f"Letter dispatched to {recipient_name} via simulated USPS. Tracking: {tracking_number}",
+        message=f"Letter dispatched to {recipient_name} via simulated USPS. Tracking: {mailing_log.tracking_number}",
         mailing_log=MailingLogResponse(
             id=mailing_log.id,
             dispute_letter_id=mailing_log.dispute_letter_id,
